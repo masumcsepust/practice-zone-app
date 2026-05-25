@@ -13,6 +13,9 @@ public class AppDbContext : DbContext
     public DbSet<SpeechRecognitionResult> SpeechRecognitionResults => Set<SpeechRecognitionResult>();
     public DbSet<AudioRecord> AudioRecords => Set<AudioRecord>();
     public DbSet<WebSocketConnection> WebSocketConnections => Set<WebSocketConnection>();
+    public DbSet<PronunciationAssessmentResult> PronunciationAssessmentResults => Set<PronunciationAssessmentResult>();
+    public DbSet<WordPronunciationResult> WordPronunciationResults => Set<WordPronunciationResult>();
+    public DbSet<PhonemeResult> PhonemeResults => Set<PhonemeResult>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

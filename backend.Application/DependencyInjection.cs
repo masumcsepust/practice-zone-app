@@ -15,6 +15,9 @@ public static class DependencyInjection
         // Singleton: holds live WebSocket connections across the app lifetime
         services.AddSingleton<IWebSocketSessionManager, WebSocketSessionManager>();
 
+        // Phase 3: stateless JSON parser — safe as singleton
+        services.AddSingleton<IPhonemeAnalysisService, PhonemeAnalysisService>();
+
         return services;
     }
 }

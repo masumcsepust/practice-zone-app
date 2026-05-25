@@ -16,6 +16,9 @@ public static class DependencyInjection
         // Phase 2: realtime continuous recognition — Singleton to hold recognizer lifetime
         services.AddSingleton<IRealtimeSpeechService, AzureRealtimeSpeechService>();
 
+        // Phase 3: pronunciation assessment — Singleton (same lifetime reason as Phase 2)
+        services.AddSingleton<IPronunciationAssessmentService, AzurePronunciationService>();
+
         return services;
     }
 }
