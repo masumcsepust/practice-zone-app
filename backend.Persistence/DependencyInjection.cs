@@ -15,6 +15,7 @@ public static class DependencyInjection
 
         services.AddScoped<IAyahRepository, AyahRepository>();
         services.AddScoped<IRecitationSessionRepository, RecitationSessionRepository>();
+        services.AddScoped<StreamingSessionRepository>();
 
         return services;
     }

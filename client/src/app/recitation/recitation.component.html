@@ -1,0 +1,78 @@
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <h1 class="title">Quran Recitation</h1>
+    <p class="subtitle">Real-time Arabic speech recognition</p>
+  </header>
+
+  <!-- Status bar -->
+  <div class="status-bar" [ngClass]="status()">
+    <span class="status-dot"></span>
+    <span class="status-text">{{ statusMessage() }}</span>
+  </div>
+
+  <!-- Error -->
+  @if (errorMessage()) {
+    <div class="error-box">⚠ {{ errorMessage() }}</div>
+  }
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn btn-connect"
+            [disabled]="!canConnect"
+            (click)="connect()">
+      Connect
+    </button>
+
+    <button class="btn btn-disconnect"
+            [disabled]="!canDisconnect"
+            (click)="disconnect()">
+      Disconnect
+    </button>
+
+    <button class="btn btn-record"
+            [disabled]="!canRecord"
+            (click)="startRecording()">
+      🎤 Start Recording
+    </button>
+
+    <button class="btn btn-stop"
+            [disabled]="!canStop"
+            (click)="stopRecording()">
+      ⏹ Stop
+    </button>
+
+    <button class="btn btn-clear"
+            (click)="clearText()">
+      Clear
+    </button>
+  </div>
+
+  <!-- Recording indicator -->
+  @if (isRecording()) {
+    <div class="recording-indicator">
+      <span class="pulse"></span> Recording in progress…
+    </div>
+  }
+
+  <!-- Arabic text display -->
+  <div class="arabic-panel">
+
+    <div class="arabic-box">
+      <div class="box-label">Live (partial)</div>
+      <div class="arabic-text partial" dir="rtl">
+        {{ partialText() || '…' }}
+      </div>
+    </div>
+
+    <div class="arabic-box">
+      <div class="box-label">Final result</div>
+      <div class="arabic-text final" dir="rtl">
+        {{ finalText() || 'Your recitation will appear here' }}
+      </div>
+    </div>
+
+  </div>
+
+</div>

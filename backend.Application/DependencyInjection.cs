@@ -11,6 +11,10 @@ public static class DependencyInjection
         services.AddScoped<IArabicTextNormalizer, ArabicTextNormalizer>();
         services.AddScoped<IAyahComparisonService, AyahComparisonService>();
         services.AddScoped<IRecitationService, RecitationService>();
+
+        // Singleton: holds live WebSocket connections across the app lifetime
+        services.AddSingleton<IWebSocketSessionManager, WebSocketSessionManager>();
+
         return services;
     }
 }
