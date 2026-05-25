@@ -38,8 +38,8 @@ public class AzureRealtimeSpeechService : IRealtimeSpeechService
         var speechConfig = SpeechConfig.FromSubscription(_subscriptionKey, _region);
         speechConfig.SpeechRecognitionLanguage = "ar-SA";
 
-        // PCM 16kHz 16-bit mono — works on all platforms, no GStreamer needed
-        var audioFormat = AudioStreamFormat.GetWaveFormatPCM(16000, 16, 1);
+        // ANY lets Azure auto-detect the container format (webm/opus from MediaRecorder)
+        var audioFormat = AudioStreamFormat.GetCompressedFormat(AudioStreamContainerFormat.ANY);
         var pushStream  = AudioInputStream.CreatePushStream(audioFormat);
         var audioConfig = AudioConfig.FromStreamInput(pushStream);
 

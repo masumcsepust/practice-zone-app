@@ -354,6 +354,37 @@
   box-sizing: border-box;
 }
 
+/* ── Debug ───────────────────────────────────────────────────────────── */
+
+.debug-box {
+  width: 100%;
+  max-width: 700px;
+  background: #0d1117;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.75rem;
+  color: #64748b;
+  box-sizing: border-box;
+}
+
+.debug-box summary {
+  cursor: pointer;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.debug-pre {
+  margin: 0.5rem 0 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: #94a3b8;
+  font-family: monospace;
+  font-size: 0.7rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
 /* ── Animations ──────────────────────────────────────────────────────── */
 
 @keyframes pulse {

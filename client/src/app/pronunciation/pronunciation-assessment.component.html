@@ -66,6 +66,14 @@
     </button>
   </div>
 
+  <!-- ── Debug panel (remove once confirmed working) ───────────────── -->
+  @if (lastRawMessage()) {
+    <details class="debug-box">
+      <summary>Last message from server</summary>
+      <pre class="debug-pre">{{ lastRawMessage() }}</pre>
+    </details>
+  }
+
   <!-- ── Recording indicator ────────────────────────────────────────── -->
   @if (isRecording()) {
     <div class="recording-indicator">

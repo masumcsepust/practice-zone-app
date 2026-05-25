@@ -51,8 +51,8 @@ public class AzurePronunciationService : IPronunciationAssessmentService
             granularity:   Granularity.Phoneme,
             enableMiscue:  true);
 
-        // PCM 16kHz 16-bit mono — no GStreamer dependency on Linux
-        var audioFormat = AudioStreamFormat.GetWaveFormatPCM(16000, 16, 1);
+        // ANY lets Azure auto-detect the container format (webm/opus from MediaRecorder)
+        var audioFormat = AudioStreamFormat.GetCompressedFormat(AudioStreamContainerFormat.ANY);
         var pushStream  = AudioInputStream.CreatePushStream(audioFormat);
         var audioConfig = AudioConfig.FromStreamInput(pushStream);
 

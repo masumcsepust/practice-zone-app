@@ -58,6 +58,7 @@ export class PronunciationAssessmentComponent implements OnDestroy {
   isRecording   = signal(false);
   errorMessage  = signal('');
   result        = signal<PronunciationResult | null>(null);
+  lastRawMessage = signal('');   // debug: shows every raw WS message received
 
   selectedAyahId = 1;   // plain property — works with ngModel
 
@@ -117,15 +118,21 @@ export class PronunciationAssessmentComponent implements OnDestroy {
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
+      const raw = event.data as string;
+      this.lastRawMessage.set(raw);
+      console.log('[WS] received:', raw);
+
       try {
-        const msg = JSON.parse(event.data as string);
+        const msg = JSON.parse(raw);
         if (msg.type === 'pronunciation') {
           this.result.set(msg as PronunciationResult);
+        } else if (msg.type === 'partial') {
+          // Phase 2 style partial — ignored in pronunciation mode
         } else if (msg.type === 'error') {
           this.errorMessage.set(msg.message ?? 'Server error');
         }
       } catch {
-        console.warn('Unparseable WS message:', event.data);
+        console.warn('[WS] unparseable message:', raw);
       }
     };
 
