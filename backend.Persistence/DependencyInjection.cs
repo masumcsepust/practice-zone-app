@@ -1,0 +1,21 @@
+using backend.Application.Interfaces;
+using backend.Persistence.Repositories;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace backend.Persistence;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration config)
+    {
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
+
+        services.AddScoped<IAyahRepository, AyahRepository>();
+        services.AddScoped<IRecitationSessionRepository, RecitationSessionRepository>();
+
+        return services;
+    }
+}

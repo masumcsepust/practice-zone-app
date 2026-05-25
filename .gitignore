@@ -1,0 +1,28 @@
+# ── Build output ──────────────────────────────────
+bin/
+obj/
+
+# ── IDE ───────────────────────────────────────────
+.vs/
+.vscode/
+*.user
+*.suo
+.idea/
+
+# ── Secrets / environment-specific config ─────────
+# appsettings.json is tracked with placeholders only — real values go in Development.json
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Staging.json
+
+# ── Audio uploads (runtime data, not source) ──────
+**/AudioUploads/*
+!**/AudioUploads/.gitkeep
+
+# ── Logs ──────────────────────────────────────────
+*.log
+logs/
+
+# ── OS ────────────────────────────────────────────
+.DS_Store
+Thumbs.db
