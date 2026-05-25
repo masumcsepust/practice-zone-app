@@ -1,10 +1,10 @@
 import { Component } from '@angular/core';
-import { RecitationComponent } from './recitation/recitation.component';
+import { PronunciationAssessmentComponent } from './pronunciation/pronunciation-assessment.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RecitationComponent],
-  template: '<app-recitation />'
+  imports: [PronunciationAssessmentComponent],
+  template: '<app-pronunciation-assessment />'
 })
 export class AppComponent {}
