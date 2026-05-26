@@ -1,0 +1,573 @@
+/* ── Page layout ─────────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  background: #0f172a;
+  color: #f1f5f9;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  padding: 2rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  box-sizing: border-box;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+
+.header { text-align: center; }
+
+.header-badge {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.5rem;
+  color: #d97706;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.375rem;
+}
+
+.title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #d97706;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: #64748b;
+  margin: 0.25rem 0 0;
+  font-size: 0.9rem;
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+
+.card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.875rem;
+  padding: 1.25rem 1.5rem;
+  width: 100%;
+  max-width: 700px;
+  box-sizing: border-box;
+}
+
+.card-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Ayah selector ───────────────────────────────────────────────────── */
+
+.ayah-select {
+  width: 100%;
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.ayah-select:focus    { border-color: #d97706; }
+.ayah-select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ayah-preview {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.75rem;
+  line-height: 2;
+  color: #e2e8f0;
+  text-align: right;
+  border-top: 1px solid #334155;
+  padding-top: 0.75rem;
+  min-height: 3rem;
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────── */
+
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid #334155;
+  background: #1e293b;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #64748b;
+  flex-shrink: 0;
+}
+
+.status-bar.connected    .status-dot { background: #22c55e; }
+.status-bar.connecting   .status-dot { background: #d97706; animation: blink 1s infinite; }
+.status-bar.disconnected .status-dot { background: #64748b; }
+.status-bar.error        .status-dot { background: #ef4444; }
+
+/* ── Error ───────────────────────────────────────────────────────────── */
+
+.error-box {
+  background: #450a0a;
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  padding: 0.7rem 1.25rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  max-width: 700px;
+  width: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* ── Controls ────────────────────────────────────────────────────────── */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  justify-content: center;
+}
+
+.btn {
+  padding: 0.55rem 1.25rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  line-height: 1;
+}
+
+.btn:disabled              { opacity: 0.3; cursor: not-allowed; }
+.btn:not(:disabled):active { transform: scale(0.95); }
+
+.btn-connect    { background: #d97706; color: #fff; }
+.btn-disconnect { background: #475569; color: #fff; }
+.btn-record     { background: #22c55e; color: #fff; }
+.btn-stop       { background: #ef4444; color: #fff; }
+.btn-clear      { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+/* ── Recording indicator ─────────────────────────────────────────────── */
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #f87171;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.pulse-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: pulse 1.2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+/* ── Recognized text ─────────────────────────────────────────────────── */
+
+.recognized-arabic {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 2rem;
+  line-height: 1.8;
+  color: #fbbf24;
+  text-align: right;
+}
+
+/* ── Tajweed hero score ───────────────────────────────────────────────── */
+
+.tajweed-hero {
+  --taj-color: #d97706;
+  background: linear-gradient(135deg, #1e293b 0%, #292524 100%);
+  border: 2px solid var(--taj-color);
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  width: 100%;
+  max-width: 700px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tajweed-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--taj-color) 12%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.taj-icon {
+  font-size: 1.75rem;
+  line-height: 1;
+  margin-bottom: 0.125rem;
+}
+
+.taj-number {
+  font-size: 4rem;
+  font-weight: 900;
+  color: var(--taj-color);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.taj-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #92400e;
+  margin-top: 0.125rem;
+}
+
+.taj-grade {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--taj-color);
+}
+
+/* ── Pronunciation sub-scores ─────────────────────────────────────────── */
+
+.scores-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 700px;
+}
+
+.score-card {
+  --score-color: #64748b;
+  background: #1e293b;
+  border: 2px solid var(--score-color);
+  border-radius: 0.875rem;
+  padding: 1rem 0.75rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.score-number {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--score-color);
+  line-height: 1;
+}
+
+.score-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.score-grade {
+  font-size: 0.7rem;
+  color: var(--score-color);
+  font-weight: 600;
+}
+
+/* ── Tajweed issues ───────────────────────────────────────────────────── */
+
+.issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.issue-row {
+  --sev: #f59e0b;
+  background: #0f172a;
+  border: 1px solid color-mix(in srgb, var(--sev) 30%, transparent);
+  border-left: 3px solid var(--sev);
+  border-radius: 0.625rem;
+  padding: 0.875rem 1rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.issue-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.rule-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sev) 15%, transparent);
+  color: var(--sev);
+  border: 1px solid color-mix(in srgb, var(--sev) 35%, transparent);
+  letter-spacing: 0.03em;
+}
+
+.rule-arabic {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.15rem;
+  color: var(--sev);
+  line-height: 1;
+}
+
+.issue-word {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.1rem;
+  color: #cbd5e1;
+  background: #1e293b;
+  padding: 0.15rem 0.5rem;
+  border-radius: 0.35rem;
+}
+
+.issue-letter {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--sev);
+}
+
+.sev-chip {
+  margin-left: auto;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sev) 12%, transparent);
+  color: var(--sev);
+}
+
+.issue-feedback {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.duration-bar-wrap {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.duration-bar-track {
+  flex: 1;
+  height: 6px;
+  background: #1e293b;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.duration-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  max-width: 100%;
+  transition: width 0.5s ease;
+  min-width: 3px;
+}
+
+.duration-hint {
+  font-size: 0.72rem;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+.duration-sep { margin: 0 0.2rem; }
+
+.no-issues {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: #22c55e;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 0;
+}
+
+.no-issues-check {
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+/* ── Word analysis ───────────────────────────────────────────────────── */
+
+.words-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  justify-content: flex-end;
+}
+
+.word-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.625rem;
+  border: 1px solid transparent;
+  min-width: 3.5rem;
+}
+
+.word-chip.word-correct {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.25);
+}
+
+.word-chip.word-incorrect {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.word-icon { font-size: 1rem; line-height: 1; }
+
+.word-arabic {
+  font-family: 'Amiri', 'Scheherazade New', 'Traditional Arabic', serif;
+  font-size: 1.4rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.word-score {
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.word-legend {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.875rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #334155;
+}
+
+.legend-item {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* ── Phoneme / weak letters ──────────────────────────────────────────── */
+
+.phoneme-hint {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0 0 1rem;
+}
+
+.phoneme-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.phoneme-row {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr 3rem 5rem;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.phoneme-symbol {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  text-align: center;
+  font-family: 'Amiri', monospace;
+}
+
+.phoneme-track {
+  height: 8px;
+  background: #0f172a;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.phoneme-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 4px;
+}
+
+.phoneme-score {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.phoneme-label { font-size: 0.75rem; color: #64748b; }
+
+/* ── Success banner ──────────────────────────────────────────────────── */
+
+.success-banner {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.12), rgba(34, 197, 94, 0.08));
+  border: 1px solid rgba(217, 119, 6, 0.4);
+  color: #fcd34d;
+  padding: 0.875rem 1.5rem;
+  border-radius: 0.875rem;
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+  max-width: 700px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Animations ──────────────────────────────────────────────────────── */
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1);   opacity: 1; }
+  50%       { transform: scale(1.5); opacity: 0.5; }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.25; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .scores-grid { grid-template-columns: repeat(2, 1fr); }
+
+  .phoneme-row {
+    grid-template-columns: 2.5rem 1fr 3rem;
+  }
+
+  .phoneme-label { display: none; }
+
+  .title { font-size: 1.6rem; }
+
+  .taj-number { font-size: 3rem; }
+}

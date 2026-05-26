@@ -1,6 +1,7 @@
 using backend.Application.Interfaces;
 using backend.Infrastructure.Speech;
 using backend.Infrastructure.Storage;
+using backend.Infrastructure.Tajweed;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace backend.Infrastructure;
@@ -18,6 +19,14 @@ public static class DependencyInjection
 
         // Phase 3: pronunciation assessment — Singleton (same lifetime reason as Phase 2)
         services.AddSingleton<IPronunciationAssessmentService, AzurePronunciationService>();
+
+        // Phase 4: Tajweed detection — all stateless, safe as singletons
+        services.AddSingleton<IMaddDetectionService,     MaddDetectionService>();
+        services.AddSingleton<IGhunnahDetectionService,  GhunnahDetectionService>();
+        services.AddSingleton<IQalqalahDetectionService, QalqalahDetectionService>();
+        services.AddSingleton<IIkhfaDetectionService,    IkhfaDetectionService>();
+        services.AddSingleton<IIdghamDetectionService,   IdghamDetectionService>();
+        services.AddSingleton<ITajweedEngine,            TajweedEngine>();
 
         return services;
     }

@@ -12,6 +12,7 @@ public class QuranRecitationWebSocketHandler
     private readonly IWebSocketSessionManager _sessionManager;
     private readonly IRealtimeSpeechService _speechService;
     private readonly IPronunciationAssessmentService _pronunciationService;
+    private readonly ITajweedEngine _tajweedEngine;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<QuranRecitationWebSocketHandler> _logger;
 
@@ -25,14 +26,16 @@ public class QuranRecitationWebSocketHandler
         IWebSocketSessionManager sessionManager,
         IRealtimeSpeechService speechService,
         IPronunciationAssessmentService pronunciationService,
+        ITajweedEngine tajweedEngine,
         IServiceScopeFactory scopeFactory,
         ILogger<QuranRecitationWebSocketHandler> logger)
     {
-        _sessionManager      = sessionManager;
-        _speechService       = speechService;
+        _sessionManager       = sessionManager;
+        _speechService        = speechService;
         _pronunciationService = pronunciationService;
-        _scopeFactory        = scopeFactory;
-        _logger              = logger;
+        _tajweedEngine        = tajweedEngine;
+        _scopeFactory         = scopeFactory;
+        _logger               = logger;
     }
 
     public async Task HandleAsync(HttpContext context)
@@ -55,12 +58,16 @@ public class QuranRecitationWebSocketHandler
         var streamingSessionRepo     = scope.ServiceProvider.GetRequiredService<StreamingSessionRepository>();
         var streamingSession         = await streamingSessionRepo.CreateAsync(userId, connectionId);
 
-        // ?ayahId=N routes to Phase 3 pronunciation assessment; omitting it falls back to Phase 2
-        var ayahIdStr          = context.Request.Query["ayahId"].FirstOrDefault();
-        var isPronunciation    = int.TryParse(ayahIdStr, out var ayahId);
+        // ?ayahId=N  → Phase 3 pronunciation assessment
+        // ?ayahId=N&tajweed=true → Phase 4 Tajweed engine
+        // (no ayahId)            → Phase 2 transcription
+        var ayahIdStr       = context.Request.Query["ayahId"].FirstOrDefault();
+        var isPronunciation = int.TryParse(ayahIdStr, out var ayahId);
+        var isTajweed       = isPronunciation
+                           && context.Request.Query["tajweed"].FirstOrDefault() == "true";
 
         if (isPronunciation)
-            await StartPronunciationSessionAsync(connectionId, ayahId, streamingSession.Id, scope);
+            await StartPronunciationSessionAsync(connectionId, ayahId, streamingSession.Id, scope, isTajweed);
         else
             await StartTranscriptionSessionAsync(connectionId, streamingSession.Id);
 
@@ -88,7 +95,7 @@ public class QuranRecitationWebSocketHandler
     // ── Phase 3: pronunciation assessment ──────────────────────────────────
 
     private async Task StartPronunciationSessionAsync(
-        string connectionId, int ayahId, int streamingSessionId, IServiceScope scope)
+        string connectionId, int ayahId, int streamingSessionId, IServiceScope scope, bool isTajweed)
     {
         var ayahRepo = scope.ServiceProvider.GetRequiredService<IAyahRepository>();
         var ayah     = await ayahRepo.GetByIdAsync(ayahId);
@@ -103,7 +110,11 @@ public class QuranRecitationWebSocketHandler
             return;
         }
 
-        _logger.LogInformation("[{ConnectionId}] Pronunciation mode — ayah {AyahId}", connectionId, ayahId);
+        if (_logger.IsEnabled(LogLevel.Information))
+        {
+            var mode = isTajweed ? "Tajweed" : "Pronunciation";
+            _logger.LogInformation("[{ConnectionId}] {Mode} mode — ayah {AyahId}", connectionId, mode, ayahId);
+        }
 
         await _pronunciationService.StartSessionAsync(connectionId, ayah.ArabicText,
             onResult: async (dto) =>
@@ -111,7 +122,11 @@ public class QuranRecitationWebSocketHandler
                 var conn = _sessionManager.GetConnection(connectionId);
                 if (conn is null) return;
 
-                await conn.SendTextAsync(JsonSerializer.Serialize(dto, JsonOptions));
+                object payload = isTajweed
+                    ? _tajweedEngine.Analyze(dto, ayah.ArabicText)
+                    : dto;
+
+                await conn.SendTextAsync(JsonSerializer.Serialize(payload, JsonOptions));
 
                 using var innerScope = _scopeFactory.CreateScope();
                 var repo = innerScope.ServiceProvider.GetRequiredService<PronunciationRepository>();

@@ -1,0 +1,222 @@
+<div class="page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-badge" dir="rtl">بِسْمِ اللَّهِ</div>
+    <h1 class="title">Tajweed Practice</h1>
+    <p class="subtitle">Realtime Tajweed correction · Surah Al-Fatiha</p>
+  </header>
+
+  <!-- ── Ayah selector ──────────────────────────────────────────────── -->
+  <div class="card ayah-card">
+    <div class="card-label">Select Ayah</div>
+
+    <select class="ayah-select"
+            [(ngModel)]="selectedAyahId"
+            [disabled]="status() === 'connecting' || status() === 'connected'">
+      @for (ayah of ayahs; track ayah.id) {
+        <option [ngValue]="ayah.id">
+          Ayah {{ ayah.number }} — {{ ayah.translation }}
+        </option>
+      }
+    </select>
+
+    <div class="ayah-preview" dir="rtl">{{ selectedAyah.arabic }}</div>
+  </div>
+
+  <!-- ── Status bar ─────────────────────────────────────────────────── -->
+  <div class="status-bar" [ngClass]="status()">
+    <span class="status-dot"></span>
+    <span class="status-text">{{ statusMessage() }}</span>
+  </div>
+
+  <!-- ── Error ──────────────────────────────────────────────────────── -->
+  @if (errorMessage()) {
+    <div class="error-box">⚠ {{ errorMessage() }}</div>
+  }
+
+  <!-- ── Controls ───────────────────────────────────────────────────── -->
+  <div class="controls">
+    <button class="btn btn-connect"
+            [disabled]="!canConnect"
+            (click)="connect()">
+      Connect
+    </button>
+
+    <button class="btn btn-disconnect"
+            [disabled]="!canDisconnect"
+            (click)="disconnect()">
+      Disconnect
+    </button>
+
+    <button class="btn btn-record"
+            [disabled]="!canRecord"
+            (click)="startRecording()">
+      🎤 Record
+    </button>
+
+    <button class="btn btn-stop"
+            [disabled]="!canStop"
+            (click)="stopRecording()">
+      ⏹ Stop
+    </button>
+
+    <button class="btn btn-clear" (click)="clearResult()">Clear</button>
+  </div>
+
+  <!-- ── Recording indicator ────────────────────────────────────────── -->
+  @if (isRecording()) {
+    <div class="recording-indicator">
+      <span class="pulse-dot"></span>
+      Recording in progress — recite clearly
+    </div>
+  }
+
+  <!-- ── Results ────────────────────────────────────────────────────── -->
+  @if (result(); as r) {
+
+    <!-- Recognized text -->
+    <div class="card">
+      <div class="card-label">Recognized Text</div>
+      <div class="recognized-arabic" dir="rtl">{{ r.recognizedText }}</div>
+    </div>
+
+    <!-- Tajweed hero score -->
+    <div class="tajweed-hero" [style.--taj-color]="tajweedColor(r.tajweedScore)">
+      <div class="taj-icon">☽</div>
+      <div class="taj-number">{{ r.tajweedScore | number:'1.0-0' }}</div>
+      <div class="taj-label">Tajweed Score</div>
+      <div class="taj-grade">{{ scoreGrade(r.tajweedScore) }}</div>
+    </div>
+
+    <!-- Pronunciation sub-scores -->
+    <div class="scores-grid">
+
+      <div class="score-card" [style.--score-color]="scoreColor(r.pronunciationScore)">
+        <div class="score-number">{{ r.pronunciationScore | number:'1.0-0' }}</div>
+        <div class="score-name">Overall</div>
+        <div class="score-grade">{{ scoreGrade(r.pronunciationScore) }}</div>
+      </div>
+
+      <div class="score-card" [style.--score-color]="scoreColor(r.accuracyScore)">
+        <div class="score-number">{{ r.accuracyScore | number:'1.0-0' }}</div>
+        <div class="score-name">Accuracy</div>
+      </div>
+
+      <div class="score-card" [style.--score-color]="scoreColor(r.fluencyScore)">
+        <div class="score-number">{{ r.fluencyScore | number:'1.0-0' }}</div>
+        <div class="score-name">Fluency</div>
+      </div>
+
+      <div class="score-card" [style.--score-color]="scoreColor(r.completenessScore)">
+        <div class="score-number">{{ r.completenessScore | number:'1.0-0' }}</div>
+        <div class="score-name">Complete</div>
+      </div>
+
+    </div>
+
+    <!-- Tajweed issues -->
+    <div class="card">
+      <div class="card-label">Tajweed Issues</div>
+
+      @if (r.tajweedIssues && r.tajweedIssues.length > 0) {
+        <div class="issues-list">
+          @for (issue of r.tajweedIssues; track $index) {
+            <div class="issue-row" [style.--sev]="severityColor(issue.severity)">
+
+              <div class="issue-header">
+                <span class="rule-badge">{{ issue.ruleType }}</span>
+                <span class="rule-arabic" dir="rtl">{{ arabicName(issue.ruleType) }}</span>
+                <span class="issue-word" dir="rtl">{{ issue.word }}</span>
+                <span class="issue-letter" dir="rtl">{{ issue.affectedLetter }}</span>
+                <span class="sev-chip">{{ issue.severity }}</span>
+              </div>
+
+              <p class="issue-feedback">{{ issue.feedback }}</p>
+
+              @if (issue.actualDurationMs !== null && issue.expectedDurationMs !== null) {
+                <div class="duration-bar-wrap">
+                  <div class="duration-bar-track">
+                    <div class="duration-bar-fill"
+                         [style.width.%]="(issue.actualDurationMs / issue.expectedDurationMs) * 100 | number:'1.0-0'"
+                         [style.background]="severityColor(issue.severity)">
+                    </div>
+                  </div>
+                  <span class="duration-hint">
+                    {{ issue.actualDurationMs | number:'1.0-0' }}ms
+                    <span class="duration-sep">/</span>
+                    ≥{{ issue.expectedDurationMs | number:'1.0-0' }}ms
+                  </span>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="no-issues">
+          <span class="no-issues-check">✓</span>
+          No Tajweed issues detected — excellent recitation!
+        </div>
+      }
+    </div>
+
+    <!-- Word analysis -->
+    @if (r.words.length > 0) {
+      <div class="card">
+        <div class="card-label">Word Analysis</div>
+        <div class="words-row" dir="rtl">
+          @for (w of r.words; track $index) {
+            <div class="word-chip"
+                 [class.word-correct]="w.isCorrect"
+                 [class.word-incorrect]="!w.isCorrect">
+              <span class="word-icon">{{ w.isCorrect ? '✅' : '⚠️' }}</span>
+              <span class="word-arabic">{{ w.word }}</span>
+              <span class="word-score" [style.color]="scoreColor(w.accuracyScore)">
+                {{ w.accuracyScore | number:'1.0-0' }}%
+              </span>
+            </div>
+          }
+        </div>
+        <div class="word-legend">
+          <span class="legend-item">✅ Correct (≥75%)</span>
+          <span class="legend-item">⚠️ Needs work (&lt;75%)</span>
+        </div>
+      </div>
+    }
+
+    <!-- Weak phonemes -->
+    @if (r.weakPhonemes && r.weakPhonemes.length > 0) {
+      <div class="card">
+        <div class="card-label">Weak Letters</div>
+        <p class="phoneme-hint">These phonemes scored below 70% — focus on these during practice.</p>
+        <div class="phoneme-list">
+          @for (p of r.weakPhonemes; track $index) {
+            <div class="phoneme-row">
+              <span class="phoneme-symbol">{{ p.phoneme }}</span>
+              <div class="phoneme-track">
+                <div class="phoneme-fill"
+                     [style.width.%]="p.accuracyScore"
+                     [style.background]="scoreColor(p.accuracyScore)">
+                </div>
+              </div>
+              <span class="phoneme-score" [style.color]="scoreColor(p.accuracyScore)">
+                {{ p.accuracyScore | number:'1.0-0' }}%
+              </span>
+              <span class="phoneme-label">{{ scoreGrade(p.accuracyScore) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Perfect banner -->
+    @if (isPerfect(r)) {
+      <div class="success-banner">
+        🌟 Excellent! Pronunciation and Tajweed are both perfect.
+      </div>
+    }
+
+  }
+
+</div>
