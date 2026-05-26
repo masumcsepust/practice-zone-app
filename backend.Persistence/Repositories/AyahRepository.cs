@@ -16,4 +16,10 @@ public class AyahRepository : IAyahRepository
     public async Task<Ayah?> GetBySurahAndAyahAsync(int surahId, int ayahNumber, CancellationToken ct = default)
         => await _ctx.Ayahs.Include(a => a.Surah)
                .FirstOrDefaultAsync(a => a.SurahId == surahId && a.AyahNumber == ayahNumber, ct);
+
+    public async Task<IReadOnlyList<Ayah>> GetBySurahIdAsync(int surahId, CancellationToken ct = default)
+        => await _ctx.Ayahs
+               .Where(a => a.SurahId == surahId)
+               .OrderBy(a => a.AyahNumber)
+               .ToListAsync(ct);
 }

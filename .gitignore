@@ -14,6 +14,7 @@ obj/
 **/appsettings.Development.json
 **/appsettings.Production.json
 **/appsettings.Staging.json
+/backend.API/appsettings.json
 
 # ── Audio uploads (runtime data, not source) ──────
 **/AudioUploads/*

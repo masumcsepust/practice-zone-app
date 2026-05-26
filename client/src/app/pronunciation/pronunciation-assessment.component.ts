@@ -1,6 +1,7 @@
-import { Component, OnDestroy, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { QuranApiService, SurahDto, AyahDto } from '../services/quran-api.service';
 
 type Status = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -28,13 +29,6 @@ interface PronunciationResult {
   weakPhonemes: PhonemeResult[];
 }
 
-interface Ayah {
-  id: number;
-  number: number;
-  arabic: string;
-  translation: string;
-}
-
 @Component({
   selector: 'app-pronunciation-assessment',
   standalone: true,
@@ -42,60 +36,56 @@ interface Ayah {
   templateUrl: './pronunciation-assessment.component.html',
   styleUrl: './pronunciation-assessment.component.css'
 })
-export class PronunciationAssessmentComponent implements OnDestroy {
+export class PronunciationAssessmentComponent implements OnInit, OnDestroy {
 
-  private readonly WS_BASE       = 'ws://localhost:5092/ws/recitation';
-  private readonly CHUNK_MS      = 250;
+  private readonly WS_BASE  = 'ws://localhost:5092/ws/recitation';
+  private readonly CHUNK_MS = 250;
+  private readonly api      = inject(QuranApiService);
 
-  private ws: WebSocket | null            = null;
+  private ws: WebSocket | null              = null;
   private mediaRecorder: MediaRecorder | null = null;
-  private stream: MediaStream | null      = null;
+  private stream: MediaStream | null        = null;
 
   // ── Reactive state ────────────────────────────────────────────────────
 
   status        = signal<Status>('disconnected');
-  statusMessage = signal('Select an ayah, then click Connect');
+  statusMessage = signal('Select a surah and ayah, then click Connect');
   isRecording   = signal(false);
   errorMessage  = signal('');
   result        = signal<PronunciationResult | null>(null);
-  lastRawMessage = signal('');   // debug: shows every raw WS message received
+  lastRawMessage = signal('');
 
-  selectedAyahId = 1;   // plain property — works with ngModel
+  surahs = signal<SurahDto[]>([]);
+  ayahs  = signal<AyahDto[]>([]);
 
-  // ── Al-Fatiha ayahs (IDs 1–7 from DB seed) ───────────────────────────
+  selectedSurahId = 1;
+  selectedAyahId  = 1;
 
-  readonly ayahs: Ayah[] = [
-    { id: 1, number: 1,
-      arabic: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-      translation: 'In the name of Allah, the Most Gracious, the Most Merciful' },
-    { id: 2, number: 2,
-      arabic: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-      translation: 'Praise be to Allah, Lord of the Worlds' },
-    { id: 3, number: 3,
-      arabic: 'الرَّحْمَٰنِ الرَّحِيمِ',
-      translation: 'The Most Gracious, the Most Merciful' },
-    { id: 4, number: 4,
-      arabic: 'مَالِكِ يَوْمِ الدِّينِ',
-      translation: 'Master of the Day of Judgment' },
-    { id: 5, number: 5,
-      arabic: 'إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ',
-      translation: 'You alone we worship, and You alone we ask for help' },
-    { id: 6, number: 6,
-      arabic: 'اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ',
-      translation: 'Guide us to the straight path' },
-    { id: 7, number: 7,
-      arabic: 'صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ',
-      translation: 'The path of those You have blessed, not those who earned anger or went astray' },
-  ];
-
-  get selectedAyah(): Ayah {
-    return this.ayahs.find(a => a.id === this.selectedAyahId) ?? this.ayahs[0];
+  get selectedAyah(): AyahDto | undefined {
+    return this.ayahs().find(a => a.id === this.selectedAyahId);
   }
 
   get canConnect()    { return this.status() === 'disconnected' || this.status() === 'error'; }
   get canDisconnect() { return this.status() === 'connected'; }
   get canRecord()     { return this.status() === 'connected' && !this.isRecording(); }
   get canStop()       { return this.isRecording(); }
+
+  // ── Lifecycle ─────────────────────────────────────────────────────────
+
+  ngOnInit(): void {
+    this.api.getSurahs().subscribe(list => {
+      this.surahs.set(list);
+      if (list.length > 0) this.loadAyahs(list[0].id);
+    });
+  }
+
+  loadAyahs(surahId: number): void {
+    this.selectedSurahId = surahId;
+    this.api.getAyahs(surahId).subscribe(list => {
+      this.ayahs.set(list);
+      if (list.length > 0) this.selectedAyahId = list[0].id;
+    });
+  }
 
   // ── WebSocket ─────────────────────────────────────────────────────────
 
@@ -126,8 +116,6 @@ export class PronunciationAssessmentComponent implements OnDestroy {
         const msg = JSON.parse(raw);
         if (msg.type === 'pronunciation') {
           this.result.set(msg as PronunciationResult);
-        } else if (msg.type === 'partial') {
-          // Phase 2 style partial — ignored in pronunciation mode
         } else if (msg.type === 'error') {
           this.errorMessage.set(msg.message ?? 'Server error');
         }

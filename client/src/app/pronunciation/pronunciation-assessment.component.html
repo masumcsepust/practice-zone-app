@@ -3,24 +3,35 @@
   <!-- ── Header ──────────────────────────────────────────────────────── -->
   <header class="header">
     <h1 class="title">Quran Pronunciation</h1>
-    <p class="subtitle">AI-powered Tajweed assessment · Surah Al-Fatiha</p>
+    <p class="subtitle">AI-powered pronunciation assessment</p>
   </header>
 
-  <!-- ── Ayah selector ──────────────────────────────────────────────── -->
+  <!-- ── Surah / Ayah selector ─────────────────────────────────────── -->
   <div class="card ayah-card">
-    <div class="card-label">Select Ayah</div>
-
+    <div class="card-label">Select Surah</div>
     <select class="ayah-select"
-            [(ngModel)]="selectedAyahId"
+            [ngModel]="selectedSurahId"
+            (ngModelChange)="loadAyahs($event)"
             [disabled]="status() === 'connecting' || status() === 'connected'">
-      @for (ayah of ayahs; track ayah.id) {
-        <option [ngValue]="ayah.id">
-          Ayah {{ ayah.number }} — {{ ayah.translation }}
+      @for (s of surahs(); track s.id) {
+        <option [ngValue]="s.id">
+          {{ s.surahNumber }}. {{ s.nameEnglish }} ({{ s.nameArabic }})
         </option>
       }
     </select>
 
-    <div class="ayah-preview" dir="rtl">{{ selectedAyah.arabic }}</div>
+    <div class="card-label" style="margin-top:0.75rem">Select Ayah</div>
+    <select class="ayah-select"
+            [(ngModel)]="selectedAyahId"
+            [disabled]="status() === 'connecting' || status() === 'connected'">
+      @for (a of ayahs(); track a.id) {
+        <option [ngValue]="a.id">
+          Ayah {{ a.ayahNumber }} — {{ a.englishTranslation }}
+        </option>
+      }
+    </select>
+
+    <div class="ayah-preview" dir="rtl">{{ selectedAyah?.arabicText }}</div>
   </div>
 
   <!-- ── Status bar ─────────────────────────────────────────────────── -->

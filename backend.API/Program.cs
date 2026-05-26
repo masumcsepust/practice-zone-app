@@ -7,6 +7,14 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Angular", policy =>
+        policy.WithOrigins("http://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
@@ -33,6 +41,7 @@ builder.Services.AddSingleton<QuranRecitationWebSocketHandler>();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseCors("Angular");
 
 // Must be registered before any middleware that needs WebSocket support
 app.UseWebSockets(new WebSocketOptions

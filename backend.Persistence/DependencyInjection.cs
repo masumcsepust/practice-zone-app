@@ -14,6 +14,7 @@ public static class DependencyInjection
             options.UseNpgsql(config.GetConnectionString("DefaultConnection")));
 
         services.AddScoped<IAyahRepository, AyahRepository>();
+        services.AddScoped<ISurahRepository, SurahRepository>();
         services.AddScoped<IRecitationSessionRepository, RecitationSessionRepository>();
         services.AddScoped<StreamingSessionRepository>();
         services.AddScoped<PronunciationRepository>();
