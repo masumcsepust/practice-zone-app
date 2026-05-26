@@ -143,7 +143,7 @@ export class TajweedAssessmentComponent implements OnDestroy {
         if (msg.type === 'tajweed') {
           this.result.set(msg as TajweedResult);
         } else if (msg.type === 'error') {
-          this.errorMessage.set((msg.message as string) ?? 'Server error');
+          this.errorMessage.set(msg.message ?? 'Server error');
         }
       } catch {
         console.warn('[WS] unparseable message:', event.data);
@@ -154,6 +154,7 @@ export class TajweedAssessmentComponent implements OnDestroy {
       this.status.set('disconnected');
       this.statusMessage.set('Disconnected');
       this.ws = null;
+      this.result.set(null);
       this.stopRecording();
     };
 

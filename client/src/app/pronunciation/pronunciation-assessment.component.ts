@@ -140,6 +140,7 @@ export class PronunciationAssessmentComponent implements OnDestroy {
       this.status.set('disconnected');
       this.statusMessage.set('Disconnected');
       this.ws = null;
+      this.result.set(null);
       this.stopRecording();
     };
 

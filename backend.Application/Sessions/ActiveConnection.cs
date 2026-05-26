@@ -22,6 +22,10 @@ public class ActiveConnection
             var bytes = Encoding.UTF8.GetBytes(message);
             await Socket.SendAsync(bytes, WebSocketMessageType.Text, true, ct);
         }
+        catch (WebSocketException)
+        {
+            // Socket closed between state-check and send — caller doesn't need to know
+        }
         finally
         {
             _sendLock.Release();

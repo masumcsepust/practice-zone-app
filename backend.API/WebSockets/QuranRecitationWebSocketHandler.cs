@@ -54,10 +54,6 @@ public class QuranRecitationWebSocketHandler
         _logger.LogInformation("WS connected [{ConnectionId}] user={UserId} ip={Ip}",
             connectionId, userId, clientIp);
 
-        using var scope              = _scopeFactory.CreateScope();
-        var streamingSessionRepo     = scope.ServiceProvider.GetRequiredService<StreamingSessionRepository>();
-        var streamingSession         = await streamingSessionRepo.CreateAsync(userId, connectionId);
-
         // ?ayahId=N  → Phase 3 pronunciation assessment
         // ?ayahId=N&tajweed=true → Phase 4 Tajweed engine
         // (no ayahId)            → Phase 2 transcription
@@ -66,14 +62,27 @@ public class QuranRecitationWebSocketHandler
         var isTajweed       = isPronunciation
                            && context.Request.Query["tajweed"].FirstOrDefault() == "true";
 
+        using var scope          = _scopeFactory.CreateScope();
+        var streamingSessionRepo = scope.ServiceProvider.GetRequiredService<StreamingSessionRepository>();
+        var streamingSession     = await streamingSessionRepo.CreateAsync(userId, connectionId);
+
+        // ready=false means the session could not start (e.g. ayah not found)
+        bool ready;
         if (isPronunciation)
-            await StartPronunciationSessionAsync(connectionId, ayahId, streamingSession.Id, scope, isTajweed);
+            ready = await StartPronunciationSessionAsync(connectionId, ayahId, streamingSession.Id, scope, isTajweed);
         else
+        {
             await StartTranscriptionSessionAsync(connectionId, streamingSession.Id);
+            ready = true;
+        }
 
         try
         {
-            await ReceiveLoopAsync(webSocket, connectionId, isPronunciation);
+            if (ready)
+                await ReceiveLoopAsync(webSocket, connectionId, isPronunciation);
+            else if (webSocket.State == WebSocketState.Open)
+                await webSocket.CloseAsync(
+                    WebSocketCloseStatus.PolicyViolation, "Ayah not found", CancellationToken.None);
         }
         finally
         {
@@ -94,7 +103,7 @@ public class QuranRecitationWebSocketHandler
 
     // ── Phase 3: pronunciation assessment ──────────────────────────────────
 
-    private async Task StartPronunciationSessionAsync(
+    private async Task<bool> StartPronunciationSessionAsync(
         string connectionId, int ayahId, int streamingSessionId, IServiceScope scope, bool isTajweed)
     {
         var ayahRepo = scope.ServiceProvider.GetRequiredService<IAyahRepository>();
@@ -102,19 +111,17 @@ public class QuranRecitationWebSocketHandler
 
         if (ayah is null)
         {
-            _logger.LogWarning("[{ConnectionId}] Ayah {AyahId} not found — closing.", connectionId, ayahId);
+            _logger.LogWarning("[{ConnectionId}] Ayah {AyahId} not found.", connectionId, ayahId);
             var conn = _sessionManager.GetConnection(connectionId);
             if (conn is not null)
                 await conn.SendTextAsync(
                     JsonSerializer.Serialize(new { type = "error", message = $"Ayah {ayahId} not found." }));
-            return;
+            return false;
         }
 
         if (_logger.IsEnabled(LogLevel.Information))
-        {
-            var mode = isTajweed ? "Tajweed" : "Pronunciation";
-            _logger.LogInformation("[{ConnectionId}] {Mode} mode — ayah {AyahId}", connectionId, mode, ayahId);
-        }
+            _logger.LogInformation("[{ConnectionId}] {Mode} mode — ayah {AyahId}",
+                connectionId, isTajweed ? "Tajweed" : "Pronunciation", ayahId);
 
         await _pronunciationService.StartSessionAsync(connectionId, ayah.ArabicText,
             onResult: async (dto) =>
@@ -132,6 +139,8 @@ public class QuranRecitationWebSocketHandler
                 var repo = innerScope.ServiceProvider.GetRequiredService<PronunciationRepository>();
                 await repo.SaveAsync(streamingSessionId, ayahId, dto);
             });
+
+        return true;
     }
 
     // ── Phase 2: plain transcription ───────────────────────────────────────
