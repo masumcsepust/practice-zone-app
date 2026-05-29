@@ -7,7 +7,9 @@ data class PronunciationResult(
     val accuracyScore:  Double,   // phoneme-level accuracy 0-100
     val recognizedText: String,   // what Azure heard
     val feedback:       String,   // English feedback from backend
-    val makhrajHint:    String    // Bengali makhraj hint
+    val makhrajHint:    String,   // Bengali makhraj hint
+    val letter:         String = "",  // target Arabic letter character (e.g. "ا")
+    val letterName:     String = ""   // target letter Arabic name (e.g. "أَلِف")
 )
 
 /** UI state machine for the বলুন (Speak) tab. */

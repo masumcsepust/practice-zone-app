@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -65,30 +66,30 @@ import com.example.quran_app.ui.theme.*
 import com.example.quran_app.ui.viewmodel.ArabicLettersViewModel
 import java.io.ByteArrayOutputStream
 
-// ── রূপ accent (violet) ───────────────────────────────────────────────────
-private val FormsAccent      = Color(0xFF7C3AED)
-private val FormsDark        = Color(0xFF5B21B6)
-private val FormsLight       = Color(0xFFF5F3FF)
-private val FormsBorder      = Color(0xFFDDD6FE)
-private val FormsBadgeBg     = Color(0xFFEDE9FE)
-private val FormsCardBg      = Color(0xFFFAF8FF)
-
-// ── লিখুন accent (indigo/blue) ────────────────────────────────────────────
-private val WriteAccent      = Color(0xFF2563EB)
-private val WriteDark        = Color(0xFF1E40AF)
-private val WriteLight       = Color(0xFFEFF6FF)
-private val WriteBorder      = Color(0xFFBFDBFE)
-private val WriteSuccess     = Color(0xFF16A34A)
-private val WriteFail        = Color(0xFFDC2626)
-
-// ── বলুন accent (amber/orange) ────────────────────────────────────────────
+// ── Unified amber/orange theme (বলুন color used everywhere) ──────────────
 private val SpeakAccent      = Color(0xFFD97706)
 private val SpeakDark        = Color(0xFF92400E)
 private val SpeakLight       = Color(0xFFFFFBEB)
 private val SpeakBorder      = Color(0xFFFDE68A)
-private val SpeakRecording   = Color(0xFFEF4444)   // red while recording
-private val SpeakSuccess     = Color(0xFF16A34A)   // green for correct
-private val SpeakFail        = Color(0xFFDC2626)   // red for incorrect
+private val SpeakRecording   = Color(0xFFEF4444)
+private val SpeakSuccess     = Color(0xFF16A34A)
+private val SpeakFail        = Color(0xFFDC2626)
+
+// রূপ panel — same amber theme
+private val FormsAccent      = SpeakAccent
+private val FormsDark        = SpeakDark
+private val FormsLight       = SpeakLight
+private val FormsBorder      = SpeakBorder
+private val FormsBadgeBg     = Color(0xFFFEF3C7)
+private val FormsCardBg      = Color(0xFFFFFBEB)
+
+// লিখুন panel — same amber theme
+private val WriteAccent      = SpeakAccent
+private val WriteDark        = SpeakDark
+private val WriteLight       = SpeakLight
+private val WriteBorder      = SpeakBorder
+private val WriteSuccess     = SpeakSuccess
+private val WriteFail        = SpeakFail
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Root screen
@@ -190,6 +191,8 @@ private fun SpeakPanel(
     onReset:   () -> Unit
 ) {
     val context = LocalContext.current
+    val isTablet = LocalConfiguration.current.screenWidthDp >= 600
+    
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -197,13 +200,13 @@ private fun SpeakPanel(
     }
 
     Card(
-        modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape     = RoundedCornerShape(20.dp),
+        modifier  = Modifier.fillMaxWidth().padding(horizontal = if (isTablet) 0.dp else 16.dp),
+        shape     = RoundedCornerShape(24.dp),
         colors    = CardDefaults.cardColors(containerColor = SpeakLight),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(
-            modifier            = Modifier.padding(16.dp),
+            modifier            = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // ── Header ───────────────────────────────────────────────────
@@ -213,32 +216,98 @@ private fun SpeakPanel(
                 Alignment.CenterVertically
             ) {
                 Column {
-                    Text("উচ্চারণ পরীক্ষা", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = SpeakDark)
+                    Text("উচ্চারণ পরীক্ষা", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = SpeakDark)
                     letter?.let {
                         Text("${it.letter}  ·  ${it.nameEnglish}",
-                            fontSize = 12.sp, color = SpeakAccent.copy(.8f), fontWeight = FontWeight.SemiBold)
+                            fontSize = 14.sp, color = SpeakAccent.copy(.8f), fontWeight = FontWeight.SemiBold)
                     }
                 }
                 Box(
-                    Modifier.background(Color(0xFFFEF3C7), RoundedCornerShape(20.dp)).padding(horizontal=10.dp, vertical=5.dp)
-                ) { Text("🎙️ বলুন", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = SpeakDark) }
+                    Modifier.background(Color(0xFFFEF3C7), RoundedCornerShape(20.dp)).padding(horizontal=12.dp, vertical=6.dp)
+                ) { Text("🎙️ বলুন", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = SpeakDark) }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(24.dp))
 
-            when (speakState) {
-                is SpeakState.Idle       -> SpeakIdle(letter, onRecord = {
-                    val hasPermission = ContextCompat.checkSelfPermission(
-                        context, Manifest.permission.RECORD_AUDIO
-                    ) == PackageManager.PERMISSION_GRANTED
-                    if (hasPermission) onStart() else permLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                })
-                is SpeakState.Recording  -> SpeakRecording(onStop = onStop)
-                is SpeakState.Processing -> SpeakProcessing()
-                is SpeakState.Result     -> SpeakResult(speakState.data, onReset)
-                is SpeakState.Error      -> SpeakError(speakState.message, onReset)
+            if (isTablet && (speakState is SpeakState.Idle || speakState is SpeakState.Recording || speakState is SpeakState.Processing)) {
+                Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(24.dp)) {
+                    // Column 1: Target Info
+                    Column(Modifier.weight(0.4f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("সঠিক উচ্চারণ লক্ষ্য করুন", fontSize = 14.sp, color = SpeakDark, fontWeight = FontWeight.SemiBold)
+                        Spacer(Modifier.height(16.dp))
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f)
+                                .background(Color.White, RoundedCornerShape(20.dp))
+                                .border(1.5.dp, SpeakBorder, RoundedCornerShape(20.dp)),
+                            Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(letter?.letter ?: "", fontSize = 90.sp, fontWeight = FontWeight.Bold, color = SpeakDark)
+                                Text(letter?.nameBangla ?: "", fontSize = 18.sp, color = SpeakAccent, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text("উপরের বর্ণটি দেখে সঠিক উচ্চারণের চেষ্টা করুন", fontSize = 12.sp, color = SlateGrey, textAlign = TextAlign.Center)
+                    }
+                    
+                    // Column 2: User Action
+                    Column(Modifier.weight(0.6f), horizontalAlignment = Alignment.CenterHorizontally) {
+                        when (speakState) {
+                            is SpeakState.Idle -> SpeakIdleContent(onRecord = {
+                                val hasPermission = ContextCompat.checkSelfPermission(
+                                    context, Manifest.permission.RECORD_AUDIO
+                                ) == PackageManager.PERMISSION_GRANTED
+                                if (hasPermission) onStart() else permLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                            })
+                            is SpeakState.Recording -> SpeakRecording(onStop = onStop)
+                            is SpeakState.Processing -> SpeakProcessing()
+                            else -> {}
+                        }
+                    }
+                }
+            } else {
+                when (speakState) {
+                    is SpeakState.Idle       -> SpeakIdle(letter, onRecord = {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context, Manifest.permission.RECORD_AUDIO
+                        ) == PackageManager.PERMISSION_GRANTED
+                        if (hasPermission) onStart() else permLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                    })
+                    is SpeakState.Recording  -> SpeakRecording(onStop = onStop)
+                    is SpeakState.Processing -> SpeakProcessing()
+                    is SpeakState.Result     -> SpeakResult(speakState.data, onReset)
+                    is SpeakState.Error      -> SpeakError(speakState.message, onReset)
+                }
             }
         }
+    }
+}
+
+@Composable
+private fun SpeakIdleContent(onRecord: () -> Unit) {
+    val haptic = LocalHapticFeedback.current
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Spacer(Modifier.height(20.dp))
+        Text(
+            "নিচের বোতামে চাপ দিয়ে এখন বর্ণটি জোরে বলুন",
+            fontSize = 14.sp, color = SlateGrey, textAlign = TextAlign.Center
+        )
+        // Mic button with haptic
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .background(Brush.linearGradient(listOf(SpeakDark, SpeakAccent)), CircleShape)
+                .clickable {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onRecord()
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text("🎙️", fontSize = 42.sp)
+        }
+        Text("ট্যাপ করে শুরু করুন", fontSize = 13.sp, color = SpeakAccent, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -362,11 +431,35 @@ private fun SpeakResult(result: PronunciationResult, onReset: () -> Unit) {
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(if (isCorrect) "✅ সঠিক!" else "❌ ভুল", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold,
                     color = if (isCorrect) SpeakSuccess else SpeakFail)
-                Text(result.recognizedText.ifBlank { "(কিছু শোনা যায়নি)" },
-                    fontSize = 13.sp, color = SlateGrey, textAlign = TextAlign.Center)
+
+                // Wrong-letter comparison: heard → expected
+                if (!isCorrect && result.recognizedText.isNotBlank() && result.letter.isNotBlank()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("আপনি বললেন", fontSize = 9.sp, color = SlateGrey, fontWeight = FontWeight.SemiBold)
+                            Text(result.recognizedText, fontSize = 32.sp, fontWeight = FontWeight.Bold,
+                                color = SpeakFail, fontFamily = androidx.compose.ui.text.font.FontFamily.Default)
+                        }
+                        Text("→", fontSize = 18.sp, color = SlateGrey, fontWeight = FontWeight.Bold)
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("হওয়া উচিত", fontSize = 9.sp, color = SlateGrey, fontWeight = FontWeight.SemiBold)
+                            Text(result.letter, fontSize = 32.sp, fontWeight = FontWeight.Bold,
+                                color = SpeakSuccess, fontFamily = androidx.compose.ui.text.font.FontFamily.Default)
+                            Text(result.letterName, fontSize = 10.sp, color = SpeakSuccess)
+                        }
+                    }
+                } else if (isCorrect) {
+                    Text(result.recognizedText.ifBlank { "(কিছু শোনা যায়নি)" },
+                        fontSize = 13.sp, color = SlateGrey, textAlign = TextAlign.Center)
+                } else {
+                    Text("(কিছু শোনা যায়নি)", fontSize = 13.sp, color = SlateGrey, textAlign = TextAlign.Center)
+                }
             }
         }
 
@@ -463,6 +556,7 @@ private fun LikhunPanel(
     onSubmit:     (String) -> Unit,   // base64 PNG
     onReset:      () -> Unit
 ) {
+    val isTablet = LocalConfiguration.current.screenWidthDp >= 600
     // Track all strokes: each stroke is a list of Offsets
     var strokes     by remember { mutableStateOf(listOf<List<Offset>>()) }
     var currentStroke by remember { mutableStateOf(listOf<Offset>()) }
@@ -480,94 +574,142 @@ private fun LikhunPanel(
     var canvasPx by remember { mutableStateOf(Pair(0, 0)) }   // width, height
 
     Card(
-        modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        shape     = RoundedCornerShape(20.dp),
+        modifier  = Modifier.fillMaxWidth().padding(horizontal = if (isTablet) 0.dp else 16.dp),
+        shape     = RoundedCornerShape(24.dp),
         colors    = CardDefaults.cardColors(containerColor = WriteLight),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
         Column(
-            modifier            = Modifier.padding(16.dp),
+            modifier            = Modifier.padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // ── Header ───────────────────────────────────────────────────
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Column {
-                    Text("হাতে লেখা পরীক্ষা", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = WriteDark)
+                    Text("হাতে লেখা পরীক্ষা", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = WriteDark)
                     letter?.let {
                         Text("${it.letter}  ·  ${it.nameEnglish}",
-                            fontSize = 12.sp, color = WriteAccent.copy(.8f), fontWeight = FontWeight.SemiBold)
+                            fontSize = 14.sp, color = WriteAccent.copy(.8f), fontWeight = FontWeight.SemiBold)
                     }
                 }
                 Box(
                     Modifier
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(RoundedCornerShape(12.dp))
                         .background(WriteAccent.copy(.12f))
-                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("✏️ লিখুন", fontSize = 11.sp, color = WriteAccent, fontWeight = FontWeight.Bold)
+                    Text("✏️ লিখুন", fontSize = 12.sp, color = WriteAccent, fontWeight = FontWeight.Bold)
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(24.dp))
 
             when (drawingState) {
-                // ── Idle / Drawing: show canvas ───────────────────────
                 is DrawingState.Idle -> {
-                    DrawingCanvas(
-                        strokes        = strokes,
-                        currentStroke  = currentStroke,
-                        letter         = letter,
-                        onStrokeStart  = { offset -> currentStroke = listOf(offset) },
-                        onStrokeDrag   = { offset -> currentStroke = currentStroke + offset },
-                        onStrokeEnd    = { strokes = strokes + listOf(currentStroke); currentStroke = emptyList() },
-                        onSizeCapture  = { w, h -> canvasPx = Pair(w, h) }
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    DrawingActions(
-                        hasStrokes = hasStrokes,
-                        onClear    = { strokes = emptyList(); currentStroke = emptyList() },
-                        onSubmit   = {
-                            val b64 = strokesToBitmap(strokes, canvasPx.first, canvasPx.second)
-                            onSubmit(b64)
+                    if (isTablet) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(24.dp)) {
+                            // Reference Column
+                            Column(Modifier.weight(0.4f), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("বর্ণটি অনুসরণ করুন", fontSize = 14.sp, color = WriteDark, fontWeight = FontWeight.SemiBold)
+                                Spacer(Modifier.height(16.dp))
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(1f)
+                                        .background(Color.White, RoundedCornerShape(20.dp))
+                                        .border(1.dp, WriteBorder, RoundedCornerShape(20.dp)),
+                                    Alignment.Center
+                                ) {
+                                    Text(letter?.letter ?: "", fontSize = 120.sp, color = WriteAccent.copy(0.15f))
+                                    Text(letter?.letter ?: "", fontSize = 80.sp, fontWeight = FontWeight.Bold, color = WriteDark)
+                                }
+                                Spacer(Modifier.height(16.dp))
+                                Text("নিচের ক্যানভাসে এই বর্ণটি আঁকুন", fontSize = 12.sp, color = SlateGrey, textAlign = TextAlign.Center)
+                            }
+                            
+                            // Drawing Column
+                            Column(Modifier.weight(0.6f)) {
+                                DrawingCanvas(
+                                    strokes        = strokes,
+                                    currentStroke  = currentStroke,
+                                    letter         = letter,
+                                    onStrokeStart  = { offset -> currentStroke = listOf(offset) },
+                                    onStrokeDrag   = { offset -> currentStroke = currentStroke + offset },
+                                    onStrokeEnd    = { strokes = strokes + listOf(currentStroke); currentStroke = emptyList() },
+                                    onSizeCapture  = { w, h -> canvasPx = Pair(w, h) }
+                                )
+                                Spacer(Modifier.height(16.dp))
+                                DrawingActions(
+                                    hasStrokes = hasStrokes,
+                                    onClear    = { strokes = emptyList(); currentStroke = emptyList() },
+                                    onSubmit   = {
+                                        val b64 = strokesToBitmap(strokes, canvasPx.first, canvasPx.second)
+                                        onSubmit(b64)
+                                    }
+                                )
+                            }
                         }
-                    )
+                    } else {
+                        DrawingCanvas(
+                            strokes        = strokes,
+                            currentStroke  = currentStroke,
+                            letter         = letter,
+                            onStrokeStart  = { offset -> currentStroke = listOf(offset) },
+                            onStrokeDrag   = { offset -> currentStroke = currentStroke + offset },
+                            onStrokeEnd    = { strokes = strokes + listOf(currentStroke); currentStroke = emptyList() },
+                            onSizeCapture  = { w, h -> canvasPx = Pair(w, h) }
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        DrawingActions(
+                            hasStrokes = hasStrokes,
+                            onClear    = { strokes = emptyList(); currentStroke = emptyList() },
+                            onSubmit   = {
+                                val b64 = strokesToBitmap(strokes, canvasPx.first, canvasPx.second)
+                                onSubmit(b64)
+                            }
+                        )
+                    }
                 }
 
-                // ── Submitting ────────────────────────────────────────
                 is DrawingState.Submitting -> {
-                    DrawingCanvasStatic(strokes = strokes, letter = letter)
-                    Spacer(Modifier.height(16.dp))
-                    CircularProgressIndicator(color = WriteAccent, strokeWidth = 3.dp)
-                    Spacer(Modifier.height(8.dp))
-                    Text("AI বিশ্লেষণ করছে...", fontSize = 13.sp, color = WriteDark, fontWeight = FontWeight.SemiBold)
-                    Text("আপনার লেখা যাচাই হচ্ছে", fontSize = 11.sp, color = WriteAccent.copy(.7f))
+                    if (isTablet) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(24.dp)) {
+                             Box(Modifier.weight(0.4f).aspectRatio(1f), Alignment.Center) {
+                                 DrawingCanvasStatic(strokes = strokes, letter = letter)
+                             }
+                             Column(Modifier.weight(0.6f), Arrangement.Center, Alignment.CenterHorizontally) {
+                                CircularProgressIndicator(color = WriteAccent, strokeWidth = 4.dp)
+                                Spacer(Modifier.height(16.dp))
+                                Text("AI বিশ্লেষণ করছে...", fontSize = 16.sp, color = WriteDark, fontWeight = FontWeight.Bold)
+                                Text("আপনার লেখা যাচাই হচ্ছে", fontSize = 13.sp, color = WriteAccent.copy(.7f))
+                             }
+                        }
+                    } else {
+                        DrawingCanvasStatic(strokes = strokes, letter = letter)
+                        Spacer(Modifier.height(16.dp))
+                        CircularProgressIndicator(color = WriteAccent, strokeWidth = 3.dp)
+                        Spacer(Modifier.height(8.dp))
+                        Text("AI বিশ্লেষণ করছে...", fontSize = 13.sp, color = WriteDark, fontWeight = FontWeight.SemiBold)
+                        Text("আপনার লেখা যাচাই হচ্ছে", fontSize = 11.sp, color = WriteAccent.copy(.7f))
+                    }
                     Spacer(Modifier.height(12.dp))
                 }
 
-                // ── Result ────────────────────────────────────────────
                 is DrawingState.Result -> {
-                    val res = drawingState.data
-                    DrawingResultView(result = res, onRetry = onReset)
+                    DrawingResultView(result = drawingState.data, onRetry = onReset)
                 }
 
-                // ── Error ─────────────────────────────────────────────
                 is DrawingState.Error -> {
                     Spacer(Modifier.height(8.dp))
                     Text("⚠️ ${drawingState.message}",
-                        fontSize = 12.sp, color = WriteFail, textAlign = TextAlign.Center,
+                        fontSize = 14.sp, color = WriteFail, textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 8.dp))
-                    Spacer(Modifier.height(10.dp))
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(WriteAccent)
-                            .clickable(onClick = onReset)
-                            .padding(horizontal = 24.dp, vertical = 10.dp)
-                    ) {
-                        Text("আবার চেষ্টা করুন", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(16.dp))
+                    Box(Modifier.clip(RoundedCornerShape(12.dp)).background(WriteAccent).clickable { onReset() }.padding(horizontal = 24.dp, vertical = 10.dp)) {
+                        Text("আবার চেষ্টা করুন", fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     }
-                    Spacer(Modifier.height(8.dp))
                 }
+                else -> {}
             }
         }
     }
@@ -846,40 +988,69 @@ private fun FormsPanel(
     error:     String?,
     onRetry:   () -> Unit
 ) {
+    val isTablet = LocalConfiguration.current.screenWidthDp >= 600
+    
     Card(
-        modifier  = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        modifier  = Modifier.fillMaxWidth().padding(horizontal = if (isTablet) 0.dp else 16.dp),
         shape     = RoundedCornerShape(20.dp),
         colors    = CardDefaults.cardColors(containerColor = FormsCardBg),
         elevation = CardDefaults.cardElevation(8.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(24.dp)) {
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                 Column {
-                    Text("বর্ণের রূপভেদ", fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = FormsDark)
-                    letter?.let { Text("${it.letter}  ·  ${it.nameEnglish}", fontSize = 12.sp, color = FormsAccent.copy(.8f), fontWeight = FontWeight.SemiBold) }
+                    Text("বর্ণের রূপভেদ", fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = FormsDark)
+                    letter?.let { Text("${it.letter}  ·  ${it.nameEnglish}", fontSize = 14.sp, color = FormsAccent.copy(.8f), fontWeight = FontWeight.SemiBold) }
                 }
                 forms?.let {
                     val (lbl, bg, fg) = if (it.isConnector) Triple("উভয় দিকে যুক্ত হয় ✓", FormsBadgeBg, FormsAccent)
                                         else Triple("পরের বর্ণে যুক্ত হয় না ✗", Color(0xFFFEF2F2), Color(0xFFDC2626))
-                    Box(Modifier.background(bg, RoundedCornerShape(20.dp)).padding(horizontal = 10.dp, vertical = 5.dp)) {
-                        Text(lbl, fontSize = 10.sp, fontWeight = FontWeight.Bold, color = fg)
+                    Box(Modifier.background(bg, RoundedCornerShape(20.dp)).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                        Text(lbl, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = fg)
                     }
                 }
             }
-            Spacer(Modifier.height(16.dp))
+            
+            Spacer(Modifier.height(24.dp))
+            
             when {
-                isLoading -> Box(Modifier.fillMaxWidth().height(180.dp), Alignment.Center) {
+                isLoading -> Box(Modifier.fillMaxWidth().height(200.dp), Alignment.Center) {
                     CircularProgressIndicator(color = FormsAccent, strokeWidth = 3.dp)
                 }
                 error != null -> Column(Modifier.fillMaxWidth().padding(16.dp), Arrangement.spacedBy(12.dp), Alignment.CenterHorizontally) {
-                    Text("⚠️ $error", fontSize = 12.sp, color = Color(0xFF92400E), textAlign = TextAlign.Center)
-                    Box(Modifier.clip(RoundedCornerShape(12.dp)).background(FormsAccent).clickable { onRetry() }.padding(horizontal = 20.dp, vertical = 8.dp)) {
-                        Text("আবার চেষ্টা করুন", fontSize = 12.sp, color = Color.White, fontWeight = FontWeight.Bold)
+                    Text("⚠️ $error", fontSize = 14.sp, color = Color(0xFF92400E), textAlign = TextAlign.Center)
+                    Box(Modifier.clip(RoundedCornerShape(12.dp)).background(FormsAccent).clickable { onRetry() }.padding(horizontal = 24.dp, vertical = 10.dp)) {
+                        Text("আবার চেষ্টা করুন", fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
-                forms != null -> { FormsGrid(forms); Spacer(Modifier.height(14.dp)); FormsConnectionDiagram(forms) }
+                forms != null -> {
+                    if (isTablet) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(24.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                Text("অবস্থান অনুযায়ী রূপ", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FormsDark)
+                                Spacer(Modifier.height(12.dp))
+                                FormsGrid(forms)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                Text("সংযোগ প্রবাহ", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FormsDark)
+                                Spacer(Modifier.height(12.dp))
+                                FormsConnectionDiagram(forms)
+                                Spacer(Modifier.height(16.dp))
+                                InfoChip(
+                                    label = "বর্ণের ধরণ",
+                                    value = if (forms.isConnector) "এটি একটি সংযোগকারী বর্ণ" else "এটি একটি অ-সংযোগকারী বর্ণ",
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                        }
+                    } else {
+                        FormsGrid(forms)
+                        Spacer(Modifier.height(14.dp))
+                        FormsConnectionDiagram(forms)
+                    }
+                }
                 else -> Box(Modifier.fillMaxWidth().height(100.dp), Alignment.Center) {
-                    Text("একটি বর্ণ নির্বাচন করুন", color = SlateGrey, fontSize = 13.sp)
+                    Text("একটি বর্ণ নির্বাচন করুন", color = SlateGrey, fontSize = 14.sp)
                 }
             }
         }
@@ -1109,28 +1280,20 @@ private fun TabSwitcher(tabs: List<String>, activeTab: String, onTabSelect: (Str
             .background(Color.White.copy(.20f), RoundedCornerShape(14.dp)).padding(4.dp),
         Arrangement.spacedBy(4.dp)
     ) {
+        val activeBrush   = Brush.linearGradient(listOf(SpeakDark, SpeakAccent))
+        val inactiveBrush = Brush.linearGradient(listOf(SpeakDark.copy(.30f), SpeakAccent.copy(.30f)))
         tabs.forEach { tab ->
             val isActive = tab == activeTab
-            val activeBrush = when (tab) {
-                "রূপ"   -> Brush.linearGradient(listOf(FormsDark, FormsAccent))
-                "বলুন"  -> Brush.linearGradient(listOf(SpeakDark, SpeakAccent))
-                "লিখুন" -> Brush.linearGradient(listOf(WriteDark, WriteAccent))
-                else    -> Brush.linearGradient(listOf(Color(0xFF065F46), Color(0xFF059669)))
-            }
-            val dotColor = when (tab) {
-                "রূপ"   -> FormsAccent; "বলুন" -> SpeakAccent; "লিখুন" -> WriteAccent
-                else    -> AppSecondary
-            }
+            val tabBrush = if (isActive) activeBrush else inactiveBrush
             Box(
                 Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
-                    .background(if (isActive) activeBrush else Brush.linearGradient(listOf(Color.Transparent, Color.Transparent)))
+                    .background(tabBrush)
                     .clickable { onTabSelect(tab) }.padding(vertical = 8.dp),
                 Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(tab, fontSize = 13.sp, fontWeight = FontWeight.Bold,
-                        color = if (isActive) Color.White else Color.White.copy(.7f))
-                    // Active indicator dot
+                        color = if (isActive) Color.White else Color.White.copy(.6f))
                     Box(
                         Modifier.size(if (isActive) 5.dp else 3.dp)
                             .background(
@@ -1574,101 +1737,185 @@ private fun TabletLayout(
             .statusBarsPadding()
             .navigationBarsPadding()
     ) {
-        // ── LEFT SIDEBAR ──────────────────────────────────────────────────
-        Column(
-            Modifier
-                .width(300.dp)
-                .fillMaxHeight()
-                .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp)
+        // ── LEFT SIDEBAR (Master) ──────────────────────────────────────────
+        Surface(
+            modifier = Modifier
+                .width(320.dp)
+                .fillMaxHeight(),
+            color = Color.Black.copy(0.05f), // Subtle contrast from main bg
+            shape = RoundedCornerShape(topEnd = 24.dp, bottomEnd = 24.dp)
         ) {
-            GreetingRow()
-            Spacer(Modifier.height(12.dp))
-            StatsGrid(learned = (selectedIndex + 1).coerceAtLeast(1), total = displayTotal)
-            Spacer(Modifier.height(10.dp))
-            ProgressSection(current = selectedIndex + 1, total = displayTotal)
-            Spacer(Modifier.height(12.dp))
-            Text(
-                "আরবি বর্ণমালা",
-                fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-            // Letter grid — fills remaining sidebar height
-            TabletLetterGrid(
-                letters        = letters,
-                selectedLetter = selectedLetter,
-                selectedIndex  = selectedIndex,
-                accentColor    = accentColor,
-                onLetterSelect = { vm.selectLetter(it) },
-                modifier       = Modifier.weight(1f),
-                isLoadingMore  = isLoadingMore,
-            )
-            Spacer(Modifier.height(12.dp))
-            // Navigation pinned at sidebar bottom (no extra horizontal padding)
-            BottomActions(
-                accentBrush  = accentBrush,
-                isFirst      = isFirst,
-                isLast       = isLast,
-                onBack       = { if (!isFirst) vm.selectLetter(letters[selectedIndex - 1]) },
-                onNext       = { if (!isLast)  vm.selectLetter(letters[selectedIndex + 1]) },
-                outerPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
-            )
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                GreetingRow()
+                Spacer(Modifier.height(16.dp))
+                
+                // Sidebar Dashboard
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Color.White.copy(0.1f), RoundedCornerShape(16.dp))
+                        .padding(12.dp)
+                ) {
+                    StatsGrid(learned = (selectedIndex + 1).coerceAtLeast(1), total = displayTotal)
+                    Spacer(Modifier.height(12.dp))
+                    ProgressSection(current = selectedIndex + 1, total = displayTotal)
+                }
+                
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    "আরবি বর্ণমালা",
+                    fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White,
+                    modifier = Modifier.padding(start = 4.dp, bottom = 12.dp)
+                )
+                
+                // Scrollable Letter List
+                TabletLetterGrid(
+                    letters        = letters,
+                    selectedLetter = selectedLetter,
+                    selectedIndex  = selectedIndex,
+                    accentColor    = accentColor,
+                    onLetterSelect = { vm.selectLetter(it) },
+                    modifier       = Modifier.weight(1f),
+                    isLoadingMore  = isLoadingMore,
+                )
+                
+                Spacer(Modifier.height(16.dp))
+                
+                // Pinned Navigation at Sidebar Bottom
+                BottomActions(
+                    accentBrush  = accentBrush,
+                    isFirst      = isFirst,
+                    isLast       = isLast,
+                    onBack       = { if (!isFirst) vm.selectLetter(letters[selectedIndex - 1]) },
+                    onNext       = { if (!isLast)  vm.selectLetter(letters[selectedIndex + 1]) },
+                    outerPadding = PaddingValues(0.dp)
+                )
+            }
         }
 
-        // ── VERTICAL DIVIDER ──────────────────────────────────────────────
-        Box(
-            Modifier
-                .fillMaxHeight()
-                .width(1.dp)
-                .padding(vertical = 24.dp)
-                .background(Color.White.copy(.18f), RoundedCornerShape(1.dp))
-        )
-
-        // ── RIGHT CONTENT PANE ────────────────────────────────────────────
+        // ── RIGHT CONTENT (Detail) ─────────────────────────────────────────
         Column(
             Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .verticalScroll(rememberScrollState())
-                .padding(start = 8.dp, end = 16.dp, top = 12.dp, bottom = 16.dp)
+                .padding(horizontal = 24.dp, vertical = 16.dp)
         ) {
-            // Tab switcher (wider on tablet — tabs have more breathing room)
+            // Content Header - Selected Letter Summary
+            selectedLetter?.let { letter ->
+                TabletDetailHeader(
+                    letter      = letter,
+                    accentColor = accentColor,
+                    onPlay      = { vm.playAudio(letter.audioUrl) }
+                )
+                Spacer(Modifier.height(20.dp))
+            }
+
+            // Tab Switcher - More prominent for tablet
             TabSwitcher(
                 tabs        = listOf("পাঠ", "রূপ", "বলুন", "লিখুন"),
                 activeTab   = activeTab,
                 onTabSelect = onTabSelect
             )
-            Spacer(Modifier.height(8.dp))
-            // Content panel with fade transition
-            AnimatedContent(
-                targetState = activeTab to selectedLetter,
-                transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
-                label = "tab-content-tablet"
-            ) { (tab, letter) ->
-                when (tab) {
-                    "রূপ"   -> FormsPanel(letter, letterForms, formsLoading, formsError,
-                                  onRetry = { letter?.let { vm.fetchLetterForms(it.id) } })
-                    "বলুন"  -> SpeakPanel(
-                                   letter     = letter,
-                                   speakState = speakState,
-                                   onStart    = { vm.startRecording() },
-                                   onStop     = { letter?.let { vm.stopAndAssess(it.id) } },
-                                   onReset    = { vm.resetSpeak() }
-                                )
-                    "লিখুন" -> LikhunPanel(
-                                   letter       = letter,
-                                   drawingState = drawingState,
-                                   onSubmit     = { b64 -> letter?.let { vm.checkDrawing(it.id, b64) } },
-                                   onReset      = { vm.resetDrawing() }
-                                )
-                    else    -> letter?.let { TabletLessonCard(it) { vm.playAudio(it.audioUrl) } }
+            
+            Spacer(Modifier.height(24.dp))
+            
+            // Content Area
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                AnimatedContent(
+                    targetState = activeTab to selectedLetter,
+                    transitionSpec = { fadeIn(tween(200)) togetherWith fadeOut(tween(150)) },
+                    label = "tab-content-tablet"
+                ) { (tab, letter) ->
+                    Column(
+                        Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                    ) {
+                        when (tab) {
+                            "রূপ"   -> FormsPanel(letter, letterForms, formsLoading, formsError,
+                                          onRetry = { letter?.let { vm.fetchLetterForms(it.id) } })
+                            "বলুন"  -> SpeakPanel(
+                                           letter     = letter,
+                                           speakState = speakState,
+                                           onStart    = { vm.startRecording() },
+                                           onStop     = { letter?.let { vm.stopAndAssess(it.id) } },
+                                           onReset    = { vm.resetSpeak() }
+                                        )
+                            "লিখুন" -> LikhunPanel(
+                                           letter       = letter,
+                                           drawingState = drawingState,
+                                           onSubmit     = { b64 -> letter?.let { vm.checkDrawing(it.id, b64) } },
+                                           onReset      = { vm.resetDrawing() }
+                                        )
+                            else    -> letter?.let { TabletLessonCard(it) { vm.playAudio(it.audioUrl) } }
+                        }
+                        // Add some padding at the bottom for better scrolling feel
+                        Spacer(Modifier.height(40.dp))
+                    }
                 }
             }
         }
     }
 }
 
+@Composable
+private fun TabletDetailHeader(
+    letter: ArabicLetter,
+    accentColor: Color,
+    onPlay: () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(Color.White.copy(0.12f), RoundedCornerShape(20.dp))
+            .border(1.dp, Color.White.copy(0.2f), RoundedCornerShape(20.dp))
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Current Letter Badge
+        Box(
+            Modifier
+                .size(64.dp)
+                .background(Color.White, CircleShape),
+            Alignment.Center
+        ) {
+            Text(letter.letter, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = AppPrimary)
+        }
+        
+        Spacer(Modifier.width(20.dp))
+        
+        Column(Modifier.weight(1f)) {
+            Text(
+                text = "${letter.nameArabic} (${letter.nameEnglish})",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = Color.White
+            )
+            Text(
+                text = "উচ্চারণ: ${letter.transliteration}",
+                fontSize = 14.sp,
+                color = Color.White.copy(0.8f)
+            )
+        }
+        
+        // Quick Play Button
+        IconButton(
+            onClick = onPlay,
+            modifier = Modifier
+                .size(56.dp)
+                .background(accentColor, CircleShape)
+        ) {
+            Text("🔊", fontSize = 24.sp)
+        }
+    }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-//  Tablet letter grid  (4 columns, fills sidebar height)
+//  Tablet letter grid  (3 columns, larger cards for tablet)
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
@@ -1687,50 +1934,40 @@ private fun TabletLetterGrid(
             gridState.animateScrollToItem(selectedIndex)
     }
     LazyVerticalGrid(
-        columns               = GridCells.Fixed(4),
+        columns               = GridCells.Fixed(3), // 3 columns look cleaner in sidebar
         state                 = gridState,
         modifier              = modifier,
-        contentPadding        = PaddingValues(vertical = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalArrangement   = Arrangement.spacedBy(6.dp)
+        contentPadding        = PaddingValues(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement   = Arrangement.spacedBy(10.dp)
     ) {
         itemsIndexed(letters) { _, letter ->
             val isSel = selectedLetter?.id == letter.id
             Column(
                 Modifier
-                    .aspectRatio(0.85f)
-                    .clip(RoundedCornerShape(11.dp))
-                    .background(if (isSel) accentColor.copy(.15f) else Color.White.copy(.9f))
-                    .border(2.dp, if (isSel) accentColor else Color.Transparent, RoundedCornerShape(11.dp))
+                    .aspectRatio(0.9f)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (isSel) Color.White else Color.White.copy(0.15f))
+                    .border(2.dp, if (isSel) Color.White else Color.Transparent, RoundedCornerShape(14.dp))
                     .clickable { onLetterSelect(letter) },
                 Arrangement.Center, Alignment.CenterHorizontally
             ) {
                 Text(
-                    letter.letter, fontSize = 20.sp, fontWeight = FontWeight.Bold,
-                    color = if (isSel) accentColor else Color(0xFF334155)
+                    letter.letter, fontSize = 28.sp, fontWeight = FontWeight.Bold,
+                    color = if (isSel) AppPrimary else Color.White
                 )
                 Text(
-                    letter.nameBangla.take(4), fontSize = 8.sp,
-                    color = if (isSel) accentColor else SlateGrey,
+                    letter.nameBangla, fontSize = 10.sp,
+                    color = if (isSel) AppPrimary.copy(0.7f) else Color.White.copy(0.7f),
                     fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-                    maxLines = 1, overflow = TextOverflow.Clip
+                    maxLines = 1, overflow = TextOverflow.Ellipsis
                 )
             }
         }
-        // Full-row spinner while the next page is being fetched
         if (isLoadingMore) {
-            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
-                Box(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    Alignment.Center
-                ) {
-                    CircularProgressIndicator(
-                        color       = accentColor.copy(.7f),
-                        strokeWidth = 2.dp,
-                        modifier    = Modifier.size(28.dp)
-                    )
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Box(Modifier.fillMaxWidth().padding(8.dp), Alignment.Center) {
+                    CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(24.dp))
                 }
             }
         }
@@ -1738,99 +1975,86 @@ private fun TabletLetterGrid(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  Tablet lesson card  (wider layout — example word displayed side-by-side
-//  with the letter showcase at a larger size, makhraj expanded below)
+//  Tablet lesson card  (Grid layout — more expansive use of space)
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun TabletLessonCard(letter: ArabicLetter, onPlayAudio: () -> Unit) {
-    Card(
-        Modifier.fillMaxWidth().padding(horizontal = 0.dp),
-        RoundedCornerShape(20.dp),
-        CardDefaults.cardColors(Color.White),
-        CardDefaults.cardElevation(8.dp)
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-
-            // ── Header row ────────────────────────────────────────────────
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Column {
-                    Text("বর্ণ পরিচয়", fontSize = 12.sp, color = SlateGrey, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "${letter.letter}  ${letter.nameArabic}  —  ${letter.nameEnglish}",
-                        fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, color = NavyText
-                    )
-                }
-                Box(
-                    Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Brush.linearGradient(listOf(AppPrimary, AppSecondary)))
-                        .clickable { onPlayAudio() }
-                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                ) {
-                    Text("🔊 শুনুন", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        // Row 1: Letter Detail and Example Word
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(20.dp)) {
+            // Showcase Card
+            Card(
+                Modifier.weight(0.4f).aspectRatio(1f),
+                RoundedCornerShape(24.dp),
+                CardDefaults.cardColors(Color.White),
+                CardDefaults.cardElevation(4.dp)
+            ) {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(letter.letter, fontSize = 100.sp, fontWeight = FontWeight.Bold, color = AppPrimary)
+                        Text(letter.nameArabic, fontSize = 24.sp, color = AppSecondary, fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
-
-            // ── Main content: letter showcase + example word side-by-side ─
-            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp), Alignment.CenterVertically) {
-                // Large letter showcase
-                Box(
-                    Modifier
-                        .size(160.dp)
-                        .background(Brush.linearGradient(listOf(AppPrimary, AppSecondary)), RoundedCornerShape(20.dp)),
-                    Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(letter.letter, fontSize = 72.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                        Text(letter.transliteration, fontSize = 13.sp, color = Color.White.copy(.85f), fontWeight = FontWeight.SemiBold)
-                    }
-                }
-
-                // Right column: names + example word
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    // Name row
-                    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(10.dp)) {
-                        InfoChip(label = "বাংলা",   value = letter.nameBangla,   Modifier.weight(1f))
-                        InfoChip(label = "মাখরাজ",  value = letter.makhrajType,  Modifier.weight(1f))
-                    }
-                    // Example word
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .background(Brush.linearGradient(listOf(Color(0xFFF8FAFC), Color(0xFFF1F5F9))), RoundedCornerShape(14.dp))
-                            .border(1.5.dp, Color(0xFFE2E8F0), RoundedCornerShape(14.dp))
-                            .padding(14.dp)
-                    ) {
-                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(letter.exampleWordBn, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = AppPrimary)
-                                Text("অর্থ: ${letter.exampleWord}", fontSize = 12.sp, color = SlateGrey)
-                            }
-                            Text(
-                                letter.exampleWordArabic, fontSize = 36.sp,
-                                fontWeight = FontWeight.Bold, color = AppPrimary,
-                                textAlign = TextAlign.End
-                            )
+            
+            // Info and Example Word Card
+            Card(
+                Modifier.weight(0.6f),
+                RoundedCornerShape(24.dp),
+                CardDefaults.cardColors(Color.White),
+                CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Text("উদাহরণ (Example)", fontSize = 14.sp, color = SlateGrey, fontWeight = FontWeight.Bold)
+                    
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(letter.exampleWordArabic, fontSize = 48.sp, fontWeight = FontWeight.Bold, color = AppPrimary)
+                            Text(letter.exampleWordBn, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = AppSecondary)
+                            Text("অর্থ: ${letter.exampleWord}", fontSize = 14.sp, color = SlateGrey)
                         }
                     }
+                    
+                    HorizontalDivider(color = Color.Black.copy(0.05f))
+                    
+                    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
+                        InfoChip(label = "বাংলা নাম", value = letter.nameBangla, Modifier.weight(1f))
+                        InfoChip(label = "মাখরাজ স্থান", value = letter.makhrajType, Modifier.weight(1f))
+                    }
                 }
             }
-
-            // ── Makhraj description full width ────────────────────────────
+        }
+        
+        // Row 2: Detailed Makhraj Description
+        Card(
+            Modifier.fillMaxWidth(),
+            RoundedCornerShape(24.dp),
+            CardDefaults.cardColors(Color.White),
+            CardDefaults.cardElevation(4.dp)
+        ) {
             Row(
-                Modifier
-                    .fillMaxWidth()
-                    .background(SkyBlueAlert, RoundedCornerShape(14.dp))
-                    .border(1.dp, Color(0xFFBAE6FD), RoundedCornerShape(14.dp))
-                    .padding(14.dp),
-                Arrangement.spacedBy(10.dp), Alignment.Top
+                Modifier.padding(24.dp),
+                Arrangement.spacedBy(16.dp), Alignment.Top
             ) {
-                Text("ℹ️", fontSize = 18.sp)
-                Text(
-                    letter.makhrajDescriptionBn, fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold, color = SkyBlueDark, lineHeight = 20.sp
-                )
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .background(SkyBlueAlert, CircleShape),
+                    Alignment.Center
+                ) {
+                    Text("💡", fontSize = 20.sp)
+                }
+                Column {
+                    Text("মাখরাজ বর্ণনা", fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = NavyText)
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        letter.makhrajDescriptionBn,
+                        fontSize = 15.sp,
+                        color = SlateGrey,
+                        lineHeight = 24.sp
+                    )
+                }
             }
         }
     }

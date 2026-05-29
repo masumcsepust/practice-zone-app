@@ -13,7 +13,7 @@
       @for (l of letters(); track l.id) {
         <button class="letter-btn"
                 [class.selected]="selectedLetter()?.id === l.id"
-                [disabled]="status() === 'connecting' || status() === 'connected'"
+                [disabled]="state() === 'connecting' || state() === 'recording' || state() === 'processing'"
                 (click)="selectLetter(l)">
           <span class="letter-arabic">{{ l.letter }}</span>
           <span class="letter-name">{{ l.nameEnglish }}</span>
@@ -49,7 +49,7 @@
   }
 
   <!-- ── Status bar ─────────────────────────────────────────────────── -->
-  <div class="status-bar" [ngClass]="status()">
+  <div class="status-bar" [ngClass]="state()">
     <span class="status-dot"></span>
     <span class="status-text">{{ statusMessage() }}</span>
   </div>
@@ -61,41 +61,38 @@
 
   <!-- ── Controls ───────────────────────────────────────────────────── -->
   <div class="controls">
-    <button class="btn btn-connect"
-            [disabled]="!canConnect || !selectedLetter()"
-            (click)="connect()">
-      Connect
-    </button>
-
-    <button class="btn btn-disconnect"
-            [disabled]="!canDisconnect"
-            (click)="disconnect()">
-      Disconnect
-    </button>
-
-    <button class="btn btn-record"
-            [disabled]="!canRecord"
-            (click)="startRecording()">
-      🎤 Record
+    <button class="btn btn-start"
+            [disabled]="!canStart"
+            (click)="startPractice()">
+      🎤 Start
     </button>
 
     <button class="btn btn-stop"
             [disabled]="!canStop"
-            (click)="stopRecording()">
-      ⏹ Stop
+            (click)="stopAndSubmit()">
+      ⏹ Stop &amp; Check
     </button>
 
     <button class="btn btn-clear"
+            [disabled]="state() === 'connecting' || state() === 'recording' || state() === 'processing'"
             (click)="clearResult()">
       Clear
     </button>
   </div>
 
   <!-- ── Recording indicator ────────────────────────────────────────── -->
-  @if (isRecording()) {
+  @if (state() === 'recording') {
     <div class="recording-indicator">
       <span class="pulse-dot"></span>
       Recording — say the letter clearly
+    </div>
+  }
+
+  <!-- ── Processing indicator ──────────────────────────────────────── -->
+  @if (state() === 'processing') {
+    <div class="processing-indicator">
+      <span class="spin-dot"></span>
+      Analysing your pronunciation…
     </div>
   }
 
@@ -109,12 +106,31 @@
           <span class="verdict-text correct-text">Correct!</span>
         } @else {
           <span class="verdict-icon">❌</span>
-          <span class="verdict-text incorrect-text">Incorrect</span>
+          <span class="verdict-text incorrect-text">Wrong</span>
         }
       </div>
 
-      <div class="result-letter" dir="rtl">{{ r.letter }}</div>
-      <div class="result-name" dir="rtl">{{ r.letterName }}</div>
+      <!-- Wrong-letter comparison: heard vs expected -->
+      @if (!r.isCorrect && r.recognizedText) {
+        <div class="wrong-letter-row">
+          <div class="wrong-col">
+            <span class="wl-label">You said</span>
+            <span class="wl-letter heard" dir="rtl">{{ r.recognizedText }}</span>
+          </div>
+          <span class="wl-arrow">→</span>
+          <div class="wrong-col">
+            <span class="wl-label">Should be</span>
+            <span class="wl-letter expected" dir="rtl">{{ r.letter }}</span>
+            <span class="wl-name">{{ r.letterName }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Correct: show the letter normally -->
+      @if (r.isCorrect) {
+        <div class="result-letter" dir="rtl">{{ r.letter }}</div>
+        <div class="result-name" dir="rtl">{{ r.letterName }}</div>
+      }
 
       <div class="score-row">
         <div class="score-pill" [style.background]="scoreColor(r.accuracyScore)">
@@ -127,13 +143,18 @@
         </div>
       </div>
 
-      @if (r.recognizedText) {
-        <div class="recognized-row">
-          Heard: <span class="recognized-text" dir="rtl">{{ r.recognizedText }}</span>
+      <div class="feedback-text">{{ r.feedback }}</div>
+
+      @if (r.feedbackBn) {
+        <div class="feedback-bn" dir="rtl">{{ r.feedbackBn }}</div>
+      }
+
+      @if (r.makhrajHint) {
+        <div class="makhraj-hint">
+          <span class="hint-label">Makhraj tip:</span> {{ r.makhrajHint }}
         </div>
       }
 
-      <div class="feedback-text">{{ r.feedback }}</div>
     </div>
   }
 

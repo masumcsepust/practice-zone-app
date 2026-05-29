@@ -142,4 +142,84 @@ public class AzurePronunciationService : IPronunciationAssessmentService
 
         _logger.LogInformation("[{Id}] Azure pronunciation recognizer stopped and disposed.", connectionId);
     }
+
+    // ── One-shot letter assessment ────────────────────────────────────────────
+
+    public async Task<PronunciationResponseDto?> AssessOnceAsync(
+        string            referenceText,
+        byte[]            audioBytes,
+        string            mimeType,
+        CancellationToken ct = default)
+    {
+        var speechConfig = SpeechConfig.FromSubscription(_subscriptionKey, _region);
+        speechConfig.SpeechRecognitionLanguage = "ar-SA";
+        // Give Azure enough silence budget for a short single-letter sound
+        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000");
+        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,     "2000");
+
+        var paConfig = new PronunciationAssessmentConfig(
+            referenceText: referenceText,
+            gradingSystem: GradingSystem.HundredMark,
+            granularity:   Granularity.Phoneme,
+            enableMiscue:  true);
+
+        var baseMime    = mimeType.Split(';')[0].Trim();
+        var audioConfig = BuildAudioConfig(audioBytes, baseMime);
+
+        using var recognizer = new SpeechRecognizer(speechConfig, audioConfig);
+        paConfig.ApplyTo(recognizer);
+
+        var result = await recognizer.RecognizeOnceAsync();
+        audioConfig.Dispose();
+
+        _logger.LogInformation("AssessOnceAsync reason={Reason} text={Text}", result.Reason, result.Text);
+
+        if (result.Reason != ResultReason.RecognizedSpeech
+            || string.IsNullOrWhiteSpace(result.Text))
+            return null;   // no speech detected
+
+        var paResult     = PronunciationAssessmentResult.FromResult(result);
+        var detailedJson = result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
+        var words        = _phonemeAnalysis.ParseWords(detailedJson);
+        var weakPhonemes = words.SelectMany(w => w.Phonemes).Where(p => p.IsWeak).ToList();
+
+        return new PronunciationResponseDto
+        {
+            RecognizedText     = result.Text,
+            PronunciationScore = paResult.PronunciationScore,
+            AccuracyScore      = paResult.AccuracyScore,
+            FluencyScore       = paResult.FluencyScore,
+            CompletenessScore  = paResult.CompletenessScore,
+            Words              = words,
+            WeakPhonemes       = weakPhonemes
+        };
+    }
+
+    private static AudioConfig BuildAudioConfig(byte[] audioBytes, string mimeType)
+    {
+        var isCompressed =
+            mimeType.Contains("webm",  StringComparison.OrdinalIgnoreCase) ||
+            mimeType.Contains("ogg",   StringComparison.OrdinalIgnoreCase) ||
+            mimeType.Contains("opus",  StringComparison.OrdinalIgnoreCase) ||
+            mimeType.Contains("mpeg",  StringComparison.OrdinalIgnoreCase) ||
+            mimeType.Contains("mp3",   StringComparison.OrdinalIgnoreCase);
+
+        if (isCompressed)
+        {
+            var format = AudioStreamFormat.GetCompressedFormat(AudioStreamContainerFormat.ANY);
+            var push   = AudioInputStream.CreatePushStream(format);
+            push.Write(audioBytes);
+            push.Close();
+            return AudioConfig.FromStreamInput(push);
+        }
+
+        // WAV — strip 44-byte RIFF header before feeding raw PCM
+        var push2 = AudioInputStream.CreatePushStream();
+        var isRiff = audioBytes.Length > 44
+                     && audioBytes[0] == 'R' && audioBytes[1] == 'I'
+                     && audioBytes[2] == 'F' && audioBytes[3] == 'F';
+        push2.Write(isRiff ? audioBytes[44..] : audioBytes);
+        push2.Close();
+        return AudioConfig.FromStreamInput(push2);
+    }
 }

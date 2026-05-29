@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { QuranApiService, ArabicLetterDto } from '../services/quran-api.service';
 
-type Status = 'disconnected' | 'connecting' | 'connected' | 'error';
+type PracticeState = 'idle' | 'connecting' | 'recording' | 'processing' | 'done' | 'error';
 
 interface LetterResult {
   letter: string;
@@ -12,6 +12,8 @@ interface LetterResult {
   accuracyScore: number;
   isCorrect: boolean;
   feedback: string;
+  feedbackBn?: string;
+  makhrajHint?: string;
 }
 
 @Component({
@@ -27,27 +29,28 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
   private readonly CHUNK_MS = 250;
   private readonly api      = inject(QuranApiService);
 
-  private ws: WebSocket | null              = null;
+  private ws: WebSocket | null               = null;
   private mediaRecorder: MediaRecorder | null = null;
-  private stream: MediaStream | null        = null;
+  private stream: MediaStream | null          = null;
+  private recordingMimeType                   = 'audio/webm';
 
-  // ── Reactive state ────────────────────────────────────────────────────
+  // ── Reactive state ─────────────────────────────────────────────────────
 
-  status        = signal<Status>('disconnected');
-  statusMessage = signal('Pick a letter, then tap Connect');
-  isRecording   = signal(false);
+  state         = signal<PracticeState>('idle');
+  statusMessage = signal('Select a letter and tap 🎤 Start');
   errorMessage  = signal('');
   result        = signal<LetterResult | null>(null);
 
   letters        = signal<ArabicLetterDto[]>([]);
   selectedLetter = signal<ArabicLetterDto | null>(null);
 
-  get canConnect()    { return this.status() === 'disconnected' || this.status() === 'error'; }
-  get canDisconnect() { return this.status() === 'connected'; }
-  get canRecord()     { return this.status() === 'connected' && !this.isRecording(); }
-  get canStop()       { return this.isRecording(); }
+  get canStart() {
+    const s = this.state();
+    return !!this.selectedLetter() && (s === 'idle' || s === 'done' || s === 'error');
+  }
+  get canStop() { return this.state() === 'recording'; }
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────
+  // ── Lifecycle ──────────────────────────────────────────────────────────
 
   ngOnInit(): void {
     this.api.getLetters().subscribe(list => {
@@ -57,31 +60,33 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
   }
 
   selectLetter(letter: ArabicLetterDto): void {
-    if (this.status() !== 'disconnected' && this.status() !== 'error') return;
+    const s = this.state();
+    if (s === 'connecting' || s === 'recording' || s === 'processing') return;
     this.selectedLetter.set(letter);
     this.result.set(null);
     this.errorMessage.set('');
+    if (s !== 'idle') {
+      this.state.set('idle');
+      this.statusMessage.set('Select a letter and tap 🎤 Start');
+    }
   }
 
-  // ── WebSocket ─────────────────────────────────────────────────────────
+  // ── WebSocket + Mic ────────────────────────────────────────────────────
 
-  connect(): void {
+  async startPractice(): Promise<void> {
     const letter = this.selectedLetter();
-    if (!letter || this.ws) return;
+    if (!letter) return;
 
-    const url = `${this.WS_BASE}?letterId=${letter.id}`;
-
-    this.status.set('connecting');
+    this.state.set('connecting');
     this.statusMessage.set('Connecting…');
     this.errorMessage.set('');
     this.result.set(null);
 
-    this.ws = new WebSocket(url);
+    this.ws = new WebSocket(`${this.WS_BASE}?letterId=${letter.id}`);
     this.ws.binaryType = 'arraybuffer';
 
     this.ws.onopen = () => {
-      this.status.set('connected');
-      this.statusMessage.set('Connected — start recording and say the letter');
+      this.startMic().catch(err => console.error('startMic:', err));
     };
 
     this.ws.onmessage = (event: MessageEvent) => {
@@ -89,7 +94,11 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
         const msg = JSON.parse(event.data as string);
         if (msg.type === 'letter-result') {
           this.result.set(msg as LetterResult);
+          this.state.set('done');
+          this.statusMessage.set('Done — tap 🎤 Start to try again');
         } else if (msg.type === 'error') {
+          this.state.set('error');
+          this.statusMessage.set('Server error');
           this.errorMessage.set(msg.message ?? 'Server error');
         }
       } catch {
@@ -98,40 +107,32 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
     };
 
     this.ws.onclose = () => {
-      this.status.set('disconnected');
-      this.statusMessage.set('Disconnected');
+      this.stopMicTracks();
+      const s = this.state();
+      if (s !== 'done' && s !== 'error') {
+        this.state.set('idle');
+        this.statusMessage.set('Select a letter and tap 🎤 Start');
+      }
       this.ws = null;
-      this.stopRecording();
     };
 
     this.ws.onerror = () => {
-      this.status.set('error');
+      this.state.set('error');
       this.statusMessage.set('Connection error');
       this.errorMessage.set(`Could not connect to ${this.WS_BASE}`);
+      this.stopMicTracks();
     };
   }
 
-  disconnect(): void {
-    this.stopRecording();
-    this.ws?.close();
-    this.ws = null;
-    this.status.set('disconnected');
-    this.statusMessage.set('Disconnected');
-  }
-
-  // ── Microphone ────────────────────────────────────────────────────────
-
-  async startRecording(): Promise<void> {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-
+  private async startMic(): Promise<void> {
     try {
       this.stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
 
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+      this.recordingMimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
         ? 'audio/webm;codecs=opus'
         : 'audio/webm';
 
-      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType });
+      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType: this.recordingMimeType });
 
       this.mediaRecorder.ondataavailable = (event: BlobEvent) => {
         if (event.data.size > 0 && this.ws?.readyState === WebSocket.OPEN) {
@@ -139,35 +140,53 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
         }
       };
 
+      // Send mime type + end-of-audio AFTER final ondataavailable fires (onstop ordering guarantee)
+      this.mediaRecorder.onstop = () => {
+        if (this.ws?.readyState === WebSocket.OPEN) {
+          // Strip codec params: "audio/webm;codecs=opus" → "audio/webm"
+          const baseMime = this.recordingMimeType.split(';')[0];
+          this.ws.send(`mime:${baseMime}|end-of-audio`);
+        }
+      };
+
       this.mediaRecorder.start(this.CHUNK_MS);
-      this.isRecording.set(true);
-      this.statusMessage.set('Recording… say the letter now');
+      this.state.set('recording');
+      this.statusMessage.set('Recording — say the letter clearly');
 
     } catch (err) {
+      this.state.set('error');
       this.errorMessage.set('Microphone access denied or unavailable.');
+      this.ws?.close();
       console.error('getUserMedia error:', err);
     }
   }
 
-  stopRecording(): void {
+  stopAndSubmit(): void {
+    this.state.set('processing');
+    this.statusMessage.set('Analysing… result will appear shortly');
     this.mediaRecorder?.stop();
     this.mediaRecorder = null;
-    this.stream?.getTracks().forEach(t => t.stop());
-    this.stream = null;
-    this.isRecording.set(false);
-    if (this.status() === 'connected') {
-      this.statusMessage.set('Analysing… result will appear above');
-      if (this.ws?.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'end-of-audio' }));
-      }
-    }
+    this.stopMicTracks();
   }
 
   clearResult(): void {
     this.result.set(null);
+    this.errorMessage.set('');
+    const s = this.state();
+    if (s === 'done' || s === 'error') {
+      this.state.set('idle');
+      this.statusMessage.set('Select a letter and tap 🎤 Start');
+    }
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────
+  // ── Audio playback ─────────────────────────────────────────────────────
+
+  playAudio(letter: ArabicLetterDto): void {
+    const audio = new Audio(`http://localhost:5092${letter.audioUrl}`);
+    audio.play().catch(err => console.error('Audio play failed:', err));
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────
 
   scoreColor(score: number): string {
     if (score >= 90) return '#22c55e';
@@ -176,12 +195,20 @@ export class LetterPracticeComponent implements OnInit, OnDestroy {
     return '#ef4444';
   }
 
-  playAudio(letter: ArabicLetterDto): void {
-    const audio = new Audio(`http://localhost:5092${letter.audioUrl}`);
-    audio.play().catch(err => console.error('Audio play failed:', err));
+  private stopMicTracks(): void {
+    this.stream?.getTracks().forEach(t => t.stop());
+    this.stream = null;
+  }
+
+  private cleanup(): void {
+    this.mediaRecorder?.stop();
+    this.mediaRecorder = null;
+    this.stopMicTracks();
+    this.ws?.close();
+    this.ws = null;
   }
 
   ngOnDestroy(): void {
-    this.disconnect();
+    this.cleanup();
   }
 }

@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 export interface SurahDto {
   id: number;
@@ -50,7 +50,9 @@ export class QuranApiService {
     return this.http.get<AyahDto[]>(`${this.base}/quran/surahs/${surahId}/ayahs`);
   }
 
-  getLetters(): Observable<ArabicLetterDto[]> {
-    return this.http.get<ArabicLetterDto[]>(`${this.base}/arabic-letters`);
+  getLetters(pageSize = 100): Observable<ArabicLetterDto[]> {
+    return this.http
+      .get<{ items: ArabicLetterDto[] }>(`${this.base}/arabic-letters?page=1&pageSize=${pageSize}`)
+      .pipe(map(r => r.items));
   }
 }

@@ -116,10 +116,12 @@
   background: #64748b;
   flex-shrink: 0;
 }
-.status-bar.connected    .status-dot { background: #22c55e; }
-.status-bar.connecting   .status-dot { background: #f59e0b; }
-.status-bar.error        .status-dot { background: #ef4444; }
-.status-bar.disconnected .status-dot { background: #64748b; }
+.status-bar.idle        .status-dot { background: #64748b; }
+.status-bar.connecting  .status-dot { background: #f59e0b; }
+.status-bar.recording   .status-dot { background: #a855f7; animation: pulse 1s ease-in-out infinite; }
+.status-bar.processing  .status-dot { background: #38bdf8; }
+.status-bar.done        .status-dot { background: #22c55e; }
+.status-bar.error       .status-dot { background: #ef4444; }
 
 /* ── Error ──────────────────────────────────────────────────────────── */
 .error-box {
@@ -136,7 +138,7 @@
 .controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
 
 .btn {
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 1.1rem;
   border-radius: 0.5rem;
   border: none;
   font-size: 0.875rem;
@@ -146,11 +148,9 @@
 }
 .btn:disabled { opacity: 0.4; cursor: default; }
 
-.btn-connect    { background: #16a34a; color: #fff; }
-.btn-disconnect { background: #dc2626; color: #fff; }
-.btn-record     { background: #7c3aed; color: #fff; }
-.btn-stop       { background: #d97706; color: #fff; }
-.btn-clear      { background: #334155; color: #e2e8f0; }
+.btn-start { background: #16a34a; color: #fff; }
+.btn-stop  { background: #d97706; color: #fff; }
+.btn-clear { background: #334155; color: #e2e8f0; }
 
 /* ── Recording indicator ────────────────────────────────────────────── */
 .recording-indicator {
@@ -175,6 +175,31 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* ── Processing indicator ───────────────────────────────────────────── */
+.processing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: #0c1e38;
+  border: 1px solid #38bdf8;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #bae6fd;
+  margin-bottom: 1rem;
+}
+.spin-dot {
+  width: 0.7rem; height: 0.7rem;
+  border-radius: 50%;
+  border: 2px solid #38bdf8;
+  border-top-color: transparent;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ── Result card ────────────────────────────────────────────────────── */
@@ -243,8 +268,76 @@
   color: #e2e8f0;
 }
 
+/* ── Wrong-letter comparison ────────────────────────────────────────── */
+.wrong-letter-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  margin: 0.75rem 0 1rem;
+  padding: 0.75rem 1rem;
+  background: #1c0a0a;
+  border: 1px solid #7f1d1d;
+  border-radius: 0.625rem;
+}
+.wrong-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+.wl-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+.wl-letter {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.wl-letter.heard    { color: #f87171; }
+.wl-letter.expected { color: #4ade80; }
+.wl-name {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-size: 0.85rem;
+  color: #86efac;
+}
+.wl-arrow {
+  font-size: 1.25rem;
+  color: #4b5563;
+  margin-top: 1rem;
+}
+
 .feedback-text {
   font-size: 0.95rem;
   color: #cbd5e1;
   font-style: italic;
+  margin-bottom: 0.5rem;
+}
+
+.feedback-bn {
+  font-size: 1rem;
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  color: #c4b5fd;
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.makhraj-hint {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  padding: 0.5rem 0.75rem;
+  background: #0f172a;
+  border-radius: 0.4rem;
+  border-left: 3px solid #6366f1;
+  text-align: left;
+  margin-top: 0.5rem;
+}
+.hint-label {
+  font-weight: 600;
+  color: #818cf8;
 }

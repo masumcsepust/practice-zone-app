@@ -42,7 +42,8 @@ class MainActivity : ComponentActivity() {
                                     ArabicLettersViewModel(
                                         appContainer.quranRepository,
                                         appContainer.audioPlayer,
-                                        appContainer.letterRecorder
+                                        appContainer.letterRecorder,
+                                        appContainer.wsClient
                                     ) as T
                             }
                         )

@@ -48,8 +48,13 @@ class LetterPracticeWebSocketClient {
                     webSocket.send(chunk)
                     offset = end
                 }
-                // Signal end of audio so the backend flushes recognition
-                webSocket.send("end-of-audio")
+                // Signal end of audio — include mime type so backend uses the right decoder
+                val mimeType = when (audioFile.extension.lowercase()) {
+                    "ogg"  -> "audio/ogg"
+                    "mp4"  -> "audio/mpeg"
+                    else   -> "audio/ogg"
+                }
+                webSocket.send("mime:$mimeType|end-of-audio")
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -63,7 +68,9 @@ class LetterPracticeWebSocketClient {
                                 accuracyScore  = json.getDouble("accuracyScore"),
                                 recognizedText = json.optString("recognizedText", ""),
                                 feedback       = json.optString("feedback", ""),
-                                makhrajHint    = json.optString("makhrajHint", "")
+                                makhrajHint    = json.optString("makhrajHint", ""),
+                                letter         = json.optString("letter", ""),
+                                letterName     = json.optString("letterName", "")
                             )
                             onResult(result)
                             webSocket.close(1000, "done")

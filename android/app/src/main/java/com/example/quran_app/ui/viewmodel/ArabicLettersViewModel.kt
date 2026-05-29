@@ -2,6 +2,7 @@ package com.example.quran_app.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.quran_app.data.remote.LetterPracticeWebSocketClient
 import com.example.quran_app.data.repository.QuranRepository
 import com.example.quran_app.domain.model.ArabicLetter
 import com.example.quran_app.domain.model.DrawingState
@@ -10,6 +11,7 @@ import com.example.quran_app.domain.model.PronunciationResult
 import com.example.quran_app.domain.model.SpeakState
 import com.example.quran_app.util.AudioPlayer
 import com.example.quran_app.util.LetterRecorder
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +21,8 @@ import java.io.File
 class ArabicLettersViewModel(
     private val repository:  QuranRepository,
     private val audioPlayer: AudioPlayer,
-    private val recorder:    LetterRecorder
+    private val recorder:    LetterRecorder,
+    private val wsClient:    LetterPracticeWebSocketClient
 ) : ViewModel() {
 
     companion object {
@@ -173,22 +176,24 @@ class ArabicLettersViewModel(
         }
         recordingFile = file
 
-        // HTTP multipart upload — replaces the unreliable WebSocket path
-        viewModelScope.launch {
-            repository.checkPronunciation(letterId, file)
-                .onSuccess { result ->
+        wsClient.assess(
+            letterId  = letterId,
+            audioFile = file,
+            onResult  = { result ->
+                viewModelScope.launch(Dispatchers.Main) {
                     _speakState.value = SpeakState.Result(result)
                 }
-                .onFailure { err ->
-                    _speakState.value = SpeakState.Error(
-                        err.message?.takeIf { it.isNotBlank() }
-                            ?: "সার্ভারের সাথে সংযোগ বিচ্ছিন্ন হয়েছে"
-                    )
+            },
+            onError   = { msg ->
+                viewModelScope.launch(Dispatchers.Main) {
+                    _speakState.value = SpeakState.Error(msg)
                 }
-        }
+            }
+        )
     }
 
     fun resetSpeak() {
+        wsClient.cancel()
         _speakState.value = SpeakState.Idle
     }
 
@@ -218,5 +223,6 @@ class ArabicLettersViewModel(
         super.onCleared()
         audioPlayer.release()
         recorder.release()
+        wsClient.cancel()
     }
 }
