@@ -96,7 +96,7 @@ private val WriteFail        = SpeakFail
 // ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
-fun ArabicLettersScreen(viewModel: ArabicLettersViewModel) {
+fun ArabicLettersScreen(viewModel: ArabicLettersViewModel, onBack: () -> Unit = {}) {
     val letters         by viewModel.letters.collectAsState()
     val selectedLetter  by viewModel.selectedLetter.collectAsState()
     val isLoading       by viewModel.isLoading.collectAsState()
@@ -154,6 +154,7 @@ fun ArabicLettersScreen(viewModel: ArabicLettersViewModel) {
                     drawingState   = drawingState,
                     totalCount     = totalCount,
                     isLoadingMore  = isLoadingMore,
+                    onBack         = onBack,
                 )
             } else {
                 PhoneLayout(
@@ -172,6 +173,7 @@ fun ArabicLettersScreen(viewModel: ArabicLettersViewModel) {
                     drawingState   = drawingState,
                     totalCount     = totalCount,
                     isLoadingMore  = isLoadingMore,
+                    onBack         = onBack,
                 )
             }
         }
@@ -1157,11 +1159,22 @@ private fun ErrorState(message: String, onRetry: () -> Unit, modifier: Modifier 
 }
 
 @Composable
-private fun GreetingRow() {
+private fun GreetingRow(onBack: () -> Unit = {}) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-        Column {
-            Text("আস্‌সালামু আলাইকুম! 👋", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
-            Text("আজকের শিক্ষা অব্যাহত রাখুন", fontSize = 12.sp, color = Color.White.copy(.75f))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(
+                Modifier.size(36.dp)
+                    .background(Color.White.copy(.22f), androidx.compose.foundation.shape.CircleShape)
+                    .border(1.dp, Color.White.copy(.3f), androidx.compose.foundation.shape.CircleShape)
+                    .clickable { onBack() },
+                Alignment.Center
+            ) {
+                Text("◀", fontSize = 13.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            }
+            Column {
+                Text("বর্ণ শিক্ষা", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text("আরবি হরফ শিখুন", fontSize = 12.sp, color = Color.White.copy(.75f))
+            }
         }
         Box(Modifier.size(42.dp).background(Brush.linearGradient(listOf(Color(0xFFFBBF24), Color(0xFFF59E0B))), CircleShape), Alignment.Center) {
             Text("🧑", fontSize = 22.sp)
@@ -1620,6 +1633,7 @@ private fun PhoneLayout(
     drawingState:   DrawingState,
     totalCount:     Int = 0,
     isLoadingMore:  Boolean = false,
+    onBack:         () -> Unit = {},
 ) {
     // Use server total when available; fall back to local list size while first page is loading
     val displayTotal = totalCount.coerceAtLeast(letters.size)
@@ -1631,7 +1645,7 @@ private fun PhoneLayout(
             .verticalScroll(rememberScrollState())
     ) {
         Spacer(Modifier.height(8.dp))
-        GreetingRow()
+        GreetingRow(onBack = onBack)
         Spacer(Modifier.height(8.dp))
         StatsGrid(learned = (selectedIndex + 1).coerceAtLeast(1), total = displayTotal)
         Spacer(Modifier.height(4.dp))
@@ -1719,6 +1733,7 @@ private fun TabletLayout(
     drawingState:   DrawingState,
     totalCount:     Int = 0,
     isLoadingMore:  Boolean = false,
+    onBack:         () -> Unit = {},
 ) {
     val displayTotal = totalCount.coerceAtLeast(letters.size)
     val accentColor = when (activeTab) {
@@ -1750,9 +1765,9 @@ private fun TabletLayout(
                     .fillMaxSize()
                     .padding(16.dp)
             ) {
-                GreetingRow()
+                GreetingRow(onBack = onBack)
                 Spacer(Modifier.height(16.dp))
-                
+
                 // Sidebar Dashboard
                 Column(
                     Modifier
