@@ -28,10 +28,10 @@ public class AzurePronunciationService : IPronunciationAssessmentService
         IPhonemeAnalysisService phonemeAnalysis,
         ILogger<AzurePronunciationService> logger)
     {
-        _subscriptionKey = config["Azure:Speech:SubscriptionKey"]
-            ?? throw new InvalidOperationException("Azure:Speech:SubscriptionKey is not configured.");
-        _region = config["Azure:Speech:Region"]
-            ?? throw new InvalidOperationException("Azure:Speech:Region is not configured.");
+        // Allow empty key — StartSessionAsync will return an error to the caller
+        // rather than crashing at startup (legacy WebSocket path, superseded by HTTP check-pronunciation).
+        _subscriptionKey = config["Azure:Speech:SubscriptionKey"] ?? string.Empty;
+        _region          = config["Azure:Speech:Region"]          ?? "southeastasia";
         _phonemeAnalysis = phonemeAnalysis;
         _logger          = logger;
     }
@@ -40,6 +40,7 @@ public class AzurePronunciationService : IPronunciationAssessmentService
         string connectionId,
         string referenceText,
         Func<PronunciationResponseDto, Task> onResult,
+        Func<string, Task>? onError = null,
         CancellationToken ct = default)
     {
         var speechConfig = SpeechConfig.FromSubscription(_subscriptionKey, _region);
@@ -95,9 +96,19 @@ public class AzurePronunciationService : IPronunciationAssessmentService
             await onResult(dto);
         };
 
-        recognizer.Canceled += (_, e) =>
-            _logger.LogWarning("[{Id}] Pronunciation recognition canceled: {Details}",
-                connectionId, e.ErrorDetails);
+        recognizer.Canceled += async (_, e) =>
+        {
+            _logger.LogWarning("[{Id}] Pronunciation recognition canceled: {Reason} — {Details}",
+                connectionId, e.Reason, e.ErrorDetails);
+
+            if (onError is not null)
+            {
+                var msg = e.Reason == CancellationReason.Error
+                    ? $"Speech service error: {e.ErrorDetails}"
+                    : "কোনো কথা শোনা যায়নি। দয়া করে আবার চেষ্টা করুন।";
+                await onError(msg);
+            }
+        };
 
         _sessions[connectionId] = new RecognizerSession(recognizer, pushStream, audioConfig);
         await recognizer.StartContinuousRecognitionAsync();
@@ -110,6 +121,13 @@ public class AzurePronunciationService : IPronunciationAssessmentService
     {
         if (_sessions.TryGetValue(connectionId, out var session))
             session.InputStream.Write(chunk);
+        return Task.CompletedTask;
+    }
+
+    public Task CloseInputAsync(string connectionId)
+    {
+        if (_sessions.TryGetValue(connectionId, out var session))
+            session.InputStream.Close();
         return Task.CompletedTask;
     }
 

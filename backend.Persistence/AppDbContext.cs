@@ -17,6 +17,7 @@ public class AppDbContext : DbContext
     public DbSet<WordPronunciationResult> WordPronunciationResults => Set<WordPronunciationResult>();
     public DbSet<PhonemeResult> PhonemeResults => Set<PhonemeResult>();
     public DbSet<TajweedRule> TajweedRules => Set<TajweedRule>();
+    public DbSet<ArabicLetter> ArabicLetters => Set<ArabicLetter>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

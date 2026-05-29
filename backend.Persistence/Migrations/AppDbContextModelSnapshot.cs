@@ -22,6 +22,726 @@ namespace backend.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("backend.Domain.Entities.ArabicLetter", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ExampleWord")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ExampleWordArabic")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ExampleWordBn")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FinalForm")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("InitialForm")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("IsConnector")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsolatedForm")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Letter")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("MakhrajDescription")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("MakhrajDescriptionBn")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("MakhrajType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("MedialForm")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("NameArabic")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("NameBangla")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("NameEnglish")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sifaat")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Transliteration")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Order")
+                        .IsUnique();
+
+                    b.ToTable("ArabicLetters", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ExampleWord = "One (Ahad)",
+                            ExampleWordArabic = "أَحَد",
+                            ExampleWordBn = "এক/একক",
+                            FinalForm = "ـا",
+                            InitialForm = "ا",
+                            IsConnector = false,
+                            IsolatedForm = "ا",
+                            Letter = "ا",
+                            MakhrajDescription = "Deepest part of the throat (Hamza); Alif itself is a vowel carrier",
+                            MakhrajDescriptionBn = "কণ্ঠের সর্বনিম্ন স্থান — হামযার উচ্চারণস্থল",
+                            MakhrajType = "Throat",
+                            MedialForm = "ـا",
+                            NameArabic = "أَلِف",
+                            NameBangla = "আলিফ",
+                            NameEnglish = "Alif",
+                            Order = 1,
+                            Sifaat = "Jahr,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "ā / ʾ"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ExampleWord = "House (Bayt)",
+                            ExampleWordArabic = "بَيْت",
+                            ExampleWordBn = "বাড়ি/ঘর",
+                            FinalForm = "ـب",
+                            InitialForm = "بـ",
+                            IsConnector = true,
+                            IsolatedForm = "ب",
+                            Letter = "ب",
+                            MakhrajDescription = "Both lips pressed together (bilabial stop)",
+                            MakhrajDescriptionBn = "উভয় ঠোঁট একসাথে চেপে — দুই ঠোঁটের শব্দ",
+                            MakhrajType = "Lips",
+                            MedialForm = "ـبـ",
+                            NameArabic = "بَاء",
+                            NameBangla = "বা",
+                            NameEnglish = "Ba",
+                            Order = 2,
+                            Sifaat = "Jahr,Shiddah,Istifal,Infitah,Idhlag,Qalqalah",
+                            Transliteration = "b"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ExampleWord = "Dates (Tamr)",
+                            ExampleWordArabic = "تَمْر",
+                            ExampleWordBn = "খেজুর",
+                            FinalForm = "ـت",
+                            InitialForm = "تـ",
+                            IsConnector = true,
+                            IsolatedForm = "ت",
+                            Letter = "ت",
+                            MakhrajDescription = "Tip of tongue touches the upper front teeth",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ওপরের সামনের দাঁতে লাগিয়ে",
+                            MakhrajType = "TongueTipDental",
+                            MedialForm = "ـتـ",
+                            NameArabic = "تَاء",
+                            NameBangla = "তা",
+                            NameEnglish = "Ta",
+                            Order = 3,
+                            Sifaat = "Hams,Shiddah,Istifal,Infitah,Idhlag",
+                            Transliteration = "t"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ExampleWord = "Garment (Thawb)",
+                            ExampleWordArabic = "ثَوْب",
+                            ExampleWordBn = "পোশাক",
+                            FinalForm = "ـث",
+                            InitialForm = "ثـ",
+                            IsConnector = true,
+                            IsolatedForm = "ث",
+                            Letter = "ث",
+                            MakhrajDescription = "Tip of tongue lightly between the upper and lower teeth",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ওপর-নিচের দাঁতের মাঝখানে রেখে",
+                            MakhrajType = "TongueTipInterdental",
+                            MedialForm = "ـثـ",
+                            NameArabic = "ثَاء",
+                            NameBangla = "ছা",
+                            NameEnglish = "Tha",
+                            Order = 4,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "th"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            ExampleWord = "Mountain (Jabal)",
+                            ExampleWordArabic = "جَبَل",
+                            ExampleWordBn = "পাহাড়",
+                            FinalForm = "ـج",
+                            InitialForm = "جـ",
+                            IsConnector = true,
+                            IsolatedForm = "ج",
+                            Letter = "ج",
+                            MakhrajDescription = "Middle of the tongue meets the hard palate",
+                            MakhrajDescriptionBn = "জিহ্বার মধ্যভাগ শক্ত তালুর সাথে মিলিয়ে",
+                            MakhrajType = "TongueFront",
+                            MedialForm = "ـجـ",
+                            NameArabic = "جِيم",
+                            NameBangla = "জিম",
+                            NameEnglish = "Jim",
+                            Order = 5,
+                            Sifaat = "Jahr,Shiddah,Istifal,Infitah,Idhlag,Qalqalah",
+                            Transliteration = "j"
+                        },
+                        new
+                        {
+                            Id = 6,
+                            ExampleWord = "Truth (Haqq)",
+                            ExampleWordArabic = "حَق",
+                            ExampleWordBn = "সত্য/অধিকার",
+                            FinalForm = "ـح",
+                            InitialForm = "حـ",
+                            IsConnector = true,
+                            IsolatedForm = "ح",
+                            Letter = "ح",
+                            MakhrajDescription = "Middle of the throat — a breathy, voiceless pharyngeal fricative",
+                            MakhrajDescriptionBn = "কণ্ঠের মধ্যস্থান — নিঃশ্বাসের মতো শব্দ, কোনো কম্পন নেই",
+                            MakhrajType = "UpperThroat",
+                            MedialForm = "ـحـ",
+                            NameArabic = "حَاء",
+                            NameBangla = "হা",
+                            NameEnglish = "Ha",
+                            Order = 6,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "ḥ"
+                        },
+                        new
+                        {
+                            Id = 7,
+                            ExampleWord = "Goodness (Khayr)",
+                            ExampleWordArabic = "خَيْر",
+                            ExampleWordBn = "কল্যাণ/ভালো",
+                            FinalForm = "ـخ",
+                            InitialForm = "خـ",
+                            IsConnector = true,
+                            IsolatedForm = "خ",
+                            Letter = "خ",
+                            MakhrajDescription = "Upper throat (closest to mouth) — velar fricative",
+                            MakhrajDescriptionBn = "কণ্ঠের উপরের অংশ — গার্গলিং 'খ' শব্দ",
+                            MakhrajType = "UpperThroat",
+                            MedialForm = "ـخـ",
+                            NameArabic = "خَاء",
+                            NameBangla = "খা",
+                            NameEnglish = "Kha",
+                            Order = 7,
+                            Sifaat = "Hams,Rakhawa,Isti'la,Infitah,Idhlag",
+                            Transliteration = "kh"
+                        },
+                        new
+                        {
+                            Id = 8,
+                            ExampleWord = "Religion (Deen)",
+                            ExampleWordArabic = "دِين",
+                            ExampleWordBn = "ধর্ম",
+                            FinalForm = "ـد",
+                            InitialForm = "د",
+                            IsConnector = false,
+                            IsolatedForm = "د",
+                            Letter = "د",
+                            MakhrajDescription = "Tip and sides of tongue against the upper front teeth",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ও পার্শ্ব ওপরের সামনের দাঁতে",
+                            MakhrajType = "TongueTipDental",
+                            MedialForm = "ـد",
+                            NameArabic = "دَال",
+                            NameBangla = "দাল",
+                            NameEnglish = "Dal",
+                            Order = 8,
+                            Sifaat = "Jahr,Shiddah,Istifal,Infitah,Idhlag,Qalqalah",
+                            Transliteration = "d"
+                        },
+                        new
+                        {
+                            Id = 9,
+                            ExampleWord = "Remembrance (Dhikr)",
+                            ExampleWordArabic = "ذِكْر",
+                            ExampleWordBn = "স্মরণ/যিকর",
+                            FinalForm = "ـذ",
+                            InitialForm = "ذ",
+                            IsConnector = false,
+                            IsolatedForm = "ذ",
+                            Letter = "ذ",
+                            MakhrajDescription = "Tip of tongue lightly between the teeth (voiced)",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ দাঁতের মাঝখানে — কম্পনযুক্ত",
+                            MakhrajType = "TongueTipInterdental",
+                            MedialForm = "ـذ",
+                            NameArabic = "ذَال",
+                            NameBangla = "যাল",
+                            NameEnglish = "Dhal",
+                            Order = 9,
+                            Sifaat = "Jahr,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "dh"
+                        },
+                        new
+                        {
+                            Id = 10,
+                            ExampleWord = "Mercy (Rahma)",
+                            ExampleWordArabic = "رَحْمَة",
+                            ExampleWordBn = "দয়া/করুণা",
+                            FinalForm = "ـر",
+                            InitialForm = "ر",
+                            IsConnector = false,
+                            IsolatedForm = "ر",
+                            Letter = "ر",
+                            MakhrajDescription = "Tip of tongue near the upper gum ridge — trilled 'r'",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ওপরের মাড়ির কাছে — কম্পমান 'র'",
+                            MakhrajType = "TongueTipTrilled",
+                            MedialForm = "ـر",
+                            NameArabic = "رَاء",
+                            NameBangla = "রা",
+                            NameEnglish = "Ra",
+                            Order = 10,
+                            Sifaat = "Jahr,Tawassut,Istifal,Infitah,Idhlag,Takrir",
+                            Transliteration = "r"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ExampleWord = "Oil (Zayt)",
+                            ExampleWordArabic = "زَيْت",
+                            ExampleWordBn = "তেল",
+                            FinalForm = "ـز",
+                            InitialForm = "ز",
+                            IsConnector = false,
+                            IsolatedForm = "ز",
+                            Letter = "ز",
+                            MakhrajDescription = "Tip of tongue near lower front teeth — voiced sibilant",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ নিচের সামনের দাঁতের কাছে — কম্পনযুক্ত",
+                            MakhrajType = "TongueTipSibilant",
+                            MedialForm = "ـز",
+                            NameArabic = "زَاي",
+                            NameBangla = "যায়",
+                            NameEnglish = "Zay",
+                            Order = 11,
+                            Sifaat = "Jahr,Rakhawa,Istifal,Infitah,Idhlag,Safeer",
+                            Transliteration = "z"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ExampleWord = "Peace (Salaam)",
+                            ExampleWordArabic = "سَلَام",
+                            ExampleWordBn = "শান্তি",
+                            FinalForm = "ـس",
+                            InitialForm = "سـ",
+                            IsConnector = true,
+                            IsolatedForm = "س",
+                            Letter = "س",
+                            MakhrajDescription = "Tip of tongue near lower front teeth — voiceless sibilant",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ নিচের দাঁতের কাছে — অ-কম্পনযুক্ত 'স'",
+                            MakhrajType = "TongueTipSibilant",
+                            MedialForm = "ـسـ",
+                            NameArabic = "سِين",
+                            NameBangla = "সিন",
+                            NameEnglish = "Sin",
+                            Order = 12,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag,Safeer",
+                            Transliteration = "s"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ExampleWord = "Sun (Shams)",
+                            ExampleWordArabic = "شَمْس",
+                            ExampleWordBn = "সূর্য",
+                            FinalForm = "ـش",
+                            InitialForm = "شـ",
+                            IsConnector = true,
+                            IsolatedForm = "ش",
+                            Letter = "ش",
+                            MakhrajDescription = "Middle of tongue spread toward the hard palate — 'sh' sound",
+                            MakhrajDescriptionBn = "জিহ্বার মধ্যভাগ শক্ত তালুর দিকে ছড়িয়ে — 'শ' শব্দ",
+                            MakhrajType = "TongueFront",
+                            MedialForm = "ـشـ",
+                            NameArabic = "شِين",
+                            NameBangla = "শিন",
+                            NameEnglish = "Shin",
+                            Order = 13,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag,Tafasshi",
+                            Transliteration = "sh"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ExampleWord = "Patience (Sabr)",
+                            ExampleWordArabic = "صَبْر",
+                            ExampleWordBn = "ধৈর্য",
+                            FinalForm = "ـص",
+                            InitialForm = "صـ",
+                            IsConnector = true,
+                            IsolatedForm = "ص",
+                            Letter = "ص",
+                            MakhrajDescription = "Tip of tongue near front teeth — heavy emphatic 'S'",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ সামনের দাঁতের কাছে — ভারী জোরালো 'স'",
+                            MakhrajType = "TongueTipSibilant",
+                            MedialForm = "ـصـ",
+                            NameArabic = "صَاد",
+                            NameBangla = "সাদ",
+                            NameEnglish = "Sad",
+                            Order = 14,
+                            Sifaat = "Hams,Rakhawa,Isti'la,Itbaq,Idhlag,Safeer",
+                            Transliteration = "ṣ"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ExampleWord = "Light (Daw')",
+                            ExampleWordArabic = "ضَوْء",
+                            ExampleWordBn = "আলো",
+                            FinalForm = "ـض",
+                            InitialForm = "ضـ",
+                            IsConnector = true,
+                            IsolatedForm = "ض",
+                            Letter = "ض",
+                            MakhrajDescription = "One or both sides of tongue against the upper back molars",
+                            MakhrajDescriptionBn = "জিহ্বার এক বা উভয় পার্শ্ব ওপরের পেছনের দাঁতের সাথে",
+                            MakhrajType = "TongueSide",
+                            MedialForm = "ـضـ",
+                            NameArabic = "ضَاد",
+                            NameBangla = "দোয়াদ",
+                            NameEnglish = "Dad",
+                            Order = 15,
+                            Sifaat = "Jahr,Rakhawa,Isti'la,Itbaq,Idhlag",
+                            Transliteration = "ḍ"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ExampleWord = "Road (Tariq)",
+                            ExampleWordArabic = "طَرِيق",
+                            ExampleWordBn = "রাস্তা/পথ",
+                            FinalForm = "ـط",
+                            InitialForm = "طـ",
+                            IsConnector = true,
+                            IsolatedForm = "ط",
+                            Letter = "ط",
+                            MakhrajDescription = "Tip of tongue touches upper front teeth — emphatic heavy 'T'",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ওপরের সামনের দাঁতে — ভারী জোরালো 'ত'",
+                            MakhrajType = "TongueTipDental",
+                            MedialForm = "ـطـ",
+                            NameArabic = "طَاء",
+                            NameBangla = "তোয়া",
+                            NameEnglish = "Taa",
+                            Order = 16,
+                            Sifaat = "Jahr,Shiddah,Isti'la,Itbaq,Idhlag,Qalqalah",
+                            Transliteration = "ṭ"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ExampleWord = "Oppression (Dhulm)",
+                            ExampleWordArabic = "ظُلْم",
+                            ExampleWordBn = "অত্যাচার",
+                            FinalForm = "ـظ",
+                            InitialForm = "ظـ",
+                            IsConnector = true,
+                            IsolatedForm = "ظ",
+                            Letter = "ظ",
+                            MakhrajDescription = "Tip of tongue between teeth — heavy emphatic interdental",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ দাঁতের মাঝে — ভারী আন্তর-দন্তীয়",
+                            MakhrajType = "TongueTipInterdental",
+                            MedialForm = "ـظـ",
+                            NameArabic = "ظَاء",
+                            NameBangla = "যোয়া",
+                            NameEnglish = "Dhaa",
+                            Order = 17,
+                            Sifaat = "Jahr,Rakhawa,Isti'la,Itbaq,Idhlag",
+                            Transliteration = "ẓ"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ExampleWord = "Knowledge (Ilm)",
+                            ExampleWordArabic = "عِلْم",
+                            ExampleWordBn = "জ্ঞান",
+                            FinalForm = "ـع",
+                            InitialForm = "عـ",
+                            IsConnector = true,
+                            IsolatedForm = "ع",
+                            Letter = "ع",
+                            MakhrajDescription = "Middle of the throat — voiced pharyngeal fricative",
+                            MakhrajDescriptionBn = "কণ্ঠের মধ্যভাগ — গ্রাসনালীর কম্পনযুক্ত ঘর্ষণ শব্দ",
+                            MakhrajType = "MidThroat",
+                            MedialForm = "ـعـ",
+                            NameArabic = "عَيْن",
+                            NameBangla = "আইন",
+                            NameEnglish = "Ayn",
+                            Order = 18,
+                            Sifaat = "Jahr,Tawassut,Istifal,Infitah,Idhlag",
+                            Transliteration = "ʿ"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            ExampleWord = "Unseen (Ghayb)",
+                            ExampleWordArabic = "غَيْب",
+                            ExampleWordBn = "অদৃশ্য/গায়েব",
+                            FinalForm = "ـغ",
+                            InitialForm = "غـ",
+                            IsConnector = true,
+                            IsolatedForm = "غ",
+                            Letter = "غ",
+                            MakhrajDescription = "Upper throat — voiced velar fricative, a gargling 'gh' sound",
+                            MakhrajDescriptionBn = "কণ্ঠের উপরিভাগ — কম্পনযুক্ত 'গ' জাতীয় শব্দ",
+                            MakhrajType = "MidThroat",
+                            MedialForm = "ـغـ",
+                            NameArabic = "غَيْن",
+                            NameBangla = "গাইন",
+                            NameEnglish = "Ghayn",
+                            Order = 19,
+                            Sifaat = "Jahr,Rakhawa,Isti'la,Infitah,Idhlag",
+                            Transliteration = "gh"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            ExampleWord = "Dawn (Fajr)",
+                            ExampleWordArabic = "فَجْر",
+                            ExampleWordBn = "ভোর/ফজর",
+                            FinalForm = "ـف",
+                            InitialForm = "فـ",
+                            IsConnector = true,
+                            IsolatedForm = "ف",
+                            Letter = "ف",
+                            MakhrajDescription = "Inner edge of lower lip touches tips of upper front teeth",
+                            MakhrajDescriptionBn = "নিচের ঠোঁটের ভেতরের অংশ ওপরের সামনের দাঁতের ডগায়",
+                            MakhrajType = "Labiodental",
+                            MedialForm = "ـفـ",
+                            NameArabic = "فَاء",
+                            NameBangla = "ফা",
+                            NameEnglish = "Fa",
+                            Order = 20,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "f"
+                        },
+                        new
+                        {
+                            Id = 21,
+                            ExampleWord = "Quran (Quran)",
+                            ExampleWordArabic = "قُرْآن",
+                            ExampleWordBn = "কুরআন",
+                            FinalForm = "ـق",
+                            InitialForm = "قـ",
+                            IsConnector = true,
+                            IsolatedForm = "ق",
+                            Letter = "ق",
+                            MakhrajDescription = "Back of tongue touches the soft palate (uvular stop)",
+                            MakhrajDescriptionBn = "জিহ্বার পশ্চাৎভাগ নরম তালুতে লাগিয়ে — গভীর 'ক' শব্দ",
+                            MakhrajType = "TongueBack",
+                            MedialForm = "ـقـ",
+                            NameArabic = "قَاف",
+                            NameBangla = "কাফ",
+                            NameEnglish = "Qaf",
+                            Order = 21,
+                            Sifaat = "Jahr,Shiddah,Isti'la,Infitah,Ismat,Qalqalah",
+                            Transliteration = "q"
+                        },
+                        new
+                        {
+                            Id = 22,
+                            ExampleWord = "Book (Kitab)",
+                            ExampleWordArabic = "كِتَاب",
+                            ExampleWordBn = "বই/কিতাব",
+                            FinalForm = "ـك",
+                            InitialForm = "كـ",
+                            IsConnector = true,
+                            IsolatedForm = "ك",
+                            Letter = "ك",
+                            MakhrajDescription = "Back of tongue touches the hard palate — slightly forward of Qaf",
+                            MakhrajDescriptionBn = "জিহ্বার পশ্চাৎভাগ শক্ত তালুতে — কাফের চেয়ে সামনে",
+                            MakhrajType = "TongueBack",
+                            MedialForm = "ـكـ",
+                            NameArabic = "كَاف",
+                            NameBangla = "কাফ (ছোট)",
+                            NameEnglish = "Kaf",
+                            Order = 22,
+                            Sifaat = "Hams,Shiddah,Istifal,Infitah,Ismat",
+                            Transliteration = "k"
+                        },
+                        new
+                        {
+                            Id = 23,
+                            ExampleWord = "Night (Layl)",
+                            ExampleWordArabic = "لَيْل",
+                            ExampleWordBn = "রাত",
+                            FinalForm = "ـل",
+                            InitialForm = "لـ",
+                            IsConnector = true,
+                            IsolatedForm = "ل",
+                            Letter = "ل",
+                            MakhrajDescription = "Tip and sides of tongue along the upper gum ridge — lateral",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ও পার্শ্ব ওপরের মাড়ির পাশে — পার্শ্বীয় শব্দ",
+                            MakhrajType = "TongueSide",
+                            MedialForm = "ـلـ",
+                            NameArabic = "لَام",
+                            NameBangla = "লাম",
+                            NameEnglish = "Lam",
+                            Order = 23,
+                            Sifaat = "Jahr,Tawassut,Istifal,Infitah,Idhlag,Inhiraf",
+                            Transliteration = "l"
+                        },
+                        new
+                        {
+                            Id = 24,
+                            ExampleWord = "Water (Maa')",
+                            ExampleWordArabic = "مَاء",
+                            ExampleWordBn = "পানি",
+                            FinalForm = "ـم",
+                            InitialForm = "مـ",
+                            IsConnector = true,
+                            IsolatedForm = "م",
+                            Letter = "م",
+                            MakhrajDescription = "Both lips closed together — bilabial nasal",
+                            MakhrajDescriptionBn = "উভয় ঠোঁট বন্ধ রেখে — নাসিক শব্দ (মুখ বন্ধ, নাক দিয়ে বাতাস)",
+                            MakhrajType = "Lips",
+                            MedialForm = "ـمـ",
+                            NameArabic = "مِيم",
+                            NameBangla = "মিম",
+                            NameEnglish = "Mim",
+                            Order = 24,
+                            Sifaat = "Jahr,Tawassut,Istifal,Infitah,Idhlag",
+                            Transliteration = "m"
+                        },
+                        new
+                        {
+                            Id = 25,
+                            ExampleWord = "Light (Nur)",
+                            ExampleWordArabic = "نُور",
+                            ExampleWordBn = "আলো",
+                            FinalForm = "ـن",
+                            InitialForm = "نـ",
+                            IsConnector = true,
+                            IsolatedForm = "ن",
+                            Letter = "ن",
+                            MakhrajDescription = "Tip of tongue near the upper gum ridge — alveolar nasal",
+                            MakhrajDescriptionBn = "জিহ্বার অগ্রভাগ ওপরের মাড়ির কাছে — অনুনাসিক শব্দ",
+                            MakhrajType = "TongueTipAlveolar",
+                            MedialForm = "ـنـ",
+                            NameArabic = "نُون",
+                            NameBangla = "নুন",
+                            NameEnglish = "Nun",
+                            Order = 25,
+                            Sifaat = "Jahr,Tawassut,Istifal,Infitah,Idhlag,Ghunnah",
+                            Transliteration = "n"
+                        },
+                        new
+                        {
+                            Id = 26,
+                            ExampleWord = "Child (Walad)",
+                            ExampleWordArabic = "وَلَد",
+                            ExampleWordBn = "সন্তান",
+                            FinalForm = "ـو",
+                            InitialForm = "و",
+                            IsConnector = false,
+                            IsolatedForm = "و",
+                            Letter = "و",
+                            MakhrajDescription = "Both lips rounded and slightly apart — labio-velar semi-vowel",
+                            MakhrajDescriptionBn = "উভয় ঠোঁট গোলাকারভাবে সামান্য ফাঁক রেখে — অর্ধ-স্বরধ্বনি",
+                            MakhrajType = "Lips",
+                            MedialForm = "ـو",
+                            NameArabic = "وَاو",
+                            NameBangla = "ওয়াও",
+                            NameEnglish = "Waw",
+                            Order = 26,
+                            Sifaat = "Jahr,Rakhawa,Istifal,Infitah,Idhlag,Lin",
+                            Transliteration = "w / ū"
+                        },
+                        new
+                        {
+                            Id = 27,
+                            ExampleWord = "Guidance (Huda)",
+                            ExampleWordArabic = "هُدَى",
+                            ExampleWordBn = "পথনির্দেশনা",
+                            FinalForm = "ـه",
+                            InitialForm = "هـ",
+                            IsConnector = true,
+                            IsolatedForm = "ه",
+                            Letter = "ه",
+                            MakhrajDescription = "Deepest part of the throat — soft, breathy voiceless glottal fricative",
+                            MakhrajDescriptionBn = "কণ্ঠের সর্বনিম্ন স্থান — শীতল নিঃশ্বাসের মতো শব্দ",
+                            MakhrajType = "Throat",
+                            MedialForm = "ـهـ",
+                            NameArabic = "هَاء",
+                            NameBangla = "হা (গোল হা)",
+                            NameEnglish = "Ha",
+                            Order = 27,
+                            Sifaat = "Hams,Rakhawa,Istifal,Infitah,Idhlag",
+                            Transliteration = "h"
+                        },
+                        new
+                        {
+                            Id = 28,
+                            ExampleWord = "Day (Yawm)",
+                            ExampleWordArabic = "يَوْم",
+                            ExampleWordBn = "দিন",
+                            FinalForm = "ـي",
+                            InitialForm = "يـ",
+                            IsConnector = true,
+                            IsolatedForm = "ي",
+                            Letter = "ي",
+                            MakhrajDescription = "Middle of tongue rises toward the hard palate — palatal semi-vowel",
+                            MakhrajDescriptionBn = "জিহ্বার মধ্যভাগ শক্ত তালুর দিকে উঠিয়ে — তালব্য অর্ধ-স্বর",
+                            MakhrajType = "TongueFront",
+                            MedialForm = "ـيـ",
+                            NameArabic = "يَاء",
+                            NameBangla = "ইয়া",
+                            NameEnglish = "Ya",
+                            Order = 28,
+                            Sifaat = "Jahr,Rakhawa,Istifal,Infitah,Idhlag,Lin",
+                            Transliteration = "y / ī"
+                        });
+                });
+
             modelBuilder.Entity("backend.Domain.Entities.AudioRecord", b =>
                 {
                     b.Property<int>("Id")

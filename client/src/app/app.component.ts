@@ -1,13 +1,14 @@
 import { Component, signal } from '@angular/core';
 import { PronunciationAssessmentComponent } from './pronunciation/pronunciation-assessment.component';
 import { TajweedAssessmentComponent } from './tajweed/tajweed-assessment.component';
+import { LetterPracticeComponent } from './arabic-letters/letter-practice.component';
 
-type Mode = 'pronunciation' | 'tajweed';
+type Mode = 'pronunciation' | 'tajweed' | 'letters';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PronunciationAssessmentComponent, TajweedAssessmentComponent],
+  imports: [PronunciationAssessmentComponent, TajweedAssessmentComponent, LetterPracticeComponent],
   template: `
     <nav class="app-nav">
       <button [class.active]="mode() === 'pronunciation'" (click)="mode.set('pronunciation')">
@@ -16,13 +17,18 @@ type Mode = 'pronunciation' | 'tajweed';
       <button [class.active]="mode() === 'tajweed'" (click)="mode.set('tajweed')">
         Tajweed
       </button>
+      <button [class.active]="mode() === 'letters'" (click)="mode.set('letters')">
+        Letters
+      </button>
     </nav>
 
     <div class="app-body">
       @if (mode() === 'pronunciation') {
         <app-pronunciation-assessment />
-      } @else {
+      } @else if (mode() === 'tajweed') {
         <app-tajweed-assessment />
+      } @else {
+        <app-letter-practice />
       }
     </div>
   `,
@@ -60,17 +66,19 @@ type Mode = 'pronunciation' | 'tajweed';
       border-left: none;
     }
 
+    .app-nav button:not(:first-child):not(:last-child) {
+      border-left: none;
+    }
+
     .app-nav button.active {
       background: #1e293b;
       color: #f59e0b;
       border-color: #f59e0b;
     }
 
-    .app-body {
-      /* removes the default top padding so each page can control its own layout */
-    }
+    .app-body { }
   `]
 })
 export class AppComponent {
-  mode = signal<Mode>('tajweed');
+  mode = signal<Mode>('letters');
 }

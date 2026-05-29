@@ -12,10 +12,8 @@ public class AzureSpeechRecognitionService : ISpeechRecognitionService
 
     public AzureSpeechRecognitionService(IConfiguration config)
     {
-        _subscriptionKey = config["Azure:Speech:SubscriptionKey"]
-            ?? throw new InvalidOperationException("Azure:Speech:SubscriptionKey is not configured.");
-        _region = config["Azure:Speech:Region"]
-            ?? throw new InvalidOperationException("Azure:Speech:Region is not configured.");
+        _subscriptionKey = config["Azure:Speech:SubscriptionKey"] ?? string.Empty;
+        _region          = config["Azure:Speech:Region"]          ?? "southeastasia";
     }
 
     public async Task<string> RecognizeAsync(string audioFilePath, CancellationToken ct = default)

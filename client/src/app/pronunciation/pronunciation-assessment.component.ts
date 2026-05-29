@@ -184,7 +184,10 @@ export class PronunciationAssessmentComponent implements OnInit, OnDestroy {
     this.stream = null;
     this.isRecording.set(false);
     if (this.status() === 'connected') {
-      this.statusMessage.set('Recording stopped — result above');
+      this.statusMessage.set('Analysing… result will appear above');
+      if (this.ws?.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'end-of-audio' }));
+      }
     }
   }
 

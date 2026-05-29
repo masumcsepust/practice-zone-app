@@ -37,6 +37,7 @@ builder.Services
 
 // Singleton: stateless handler, dependencies are singletons or resolved via IServiceScopeFactory
 builder.Services.AddSingleton<QuranRecitationWebSocketHandler>();
+builder.Services.AddSingleton<LetterPracticeWebSocketHandler>();
 
 var app = builder.Build();
 
@@ -54,6 +55,13 @@ app.Map("/ws/recitation", async context =>
 {
     var handler = context.RequestServices
         .GetRequiredService<QuranRecitationWebSocketHandler>();
+    await handler.HandleAsync(context);
+});
+
+app.Map("/ws/letter", async context =>
+{
+    var handler = context.RequestServices
+        .GetRequiredService<LetterPracticeWebSocketHandler>();
     await handler.HandleAsync(context);
 });
 

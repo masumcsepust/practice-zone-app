@@ -1,29 +1,57 @@
-# ── Build output ──────────────────────────────────
-bin/
-obj/
+# ─── Secrets & environment-specific config ───────────────────────────────────
+appsettings.Development.json
+appsettings.Production.json
+appsettings.*.json
+!appsettings.json          # keep the base (non-secret) settings
 
-# ── IDE ───────────────────────────────────────────
-.vs/
-.vscode/
+# ─── .NET build outputs ───────────────────────────────────────────────────────
+**/bin/
+**/obj/
 *.user
 *.suo
+.vs/
+*.ncrunchproject
+
+# ─── Runtime uploads (audio files recorded by users) ─────────────────────────
+backend.API/AudioUploads/*
+!backend.API/AudioUploads/.gitkeep
+
+# ─── Android ─────────────────────────────────────────────────────────────────
+*.iml
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+local.properties
+/captures
+.externalNativeBuild
+.cxx
+android/.idea/caches/
+android/.idea/libraries/
+android/.idea/modules.xml
+android/.idea/workspace.xml
+android/.idea/navEditor.xml
+android/.idea/assetWizardSettings.xml
+android/app/release/
+
+# ─── Angular / Node ──────────────────────────────────────────────────────────
+client/node_modules/
+client/dist/
+client/.angular/
+client/.vscode/
+client/.env
+client/.env.*
+
+# ─── IDE / editor ────────────────────────────────────────────────────────────
 .idea/
-
-# ── Secrets / environment-specific config ─────────
-# appsettings.json is tracked with placeholders only — real values go in Development.json
-**/appsettings.Development.json
-**/appsettings.Production.json
-**/appsettings.Staging.json
-/backend.API/appsettings.json
-
-# ── Audio uploads (runtime data, not source) ──────
-**/AudioUploads/*
-!**/AudioUploads/.gitkeep
-
-# ── Logs ──────────────────────────────────────────
-*.log
-logs/
-
-# ── OS ────────────────────────────────────────────
-.DS_Store
+.vscode/
+*.DS_Store
 Thumbs.db
+
+# ─── Scratch / temp files ────────────────────────────────────────────────────
+document.txt
+arabic-learning-mockup.html
+*.tmp
+*.log
+nohup.out

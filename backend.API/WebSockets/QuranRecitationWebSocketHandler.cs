@@ -47,7 +47,10 @@ public class QuranRecitationWebSocketHandler
         }
 
         using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-        var userId          = 1; // Phase 4: resolve from JWT
+        // Resolve userId from ?userId=N query param, or Bearer token value in Authorization header.
+        // Full JWT validation belongs in auth middleware; this supports both patterns without
+        // requiring a full auth stack to be wired up first.
+        var userId = ResolveUserId(context);
         var connectionId    = _sessionManager.AddConnection(webSocket, userId);
         var clientIp        = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
@@ -166,6 +169,23 @@ public class QuranRecitationWebSocketHandler
             });
     }
 
+    // ── UserId resolution ─────────────────────────────────────────────────
+
+    private static int ResolveUserId(HttpContext context)
+    {
+        // 1. Explicit query param: ?userId=42
+        if (int.TryParse(context.Request.Query["userId"].FirstOrDefault(), out var fromQuery))
+            return fromQuery;
+
+        // 2. Authorization: Bearer <numeric-id>  (placeholder until JWT middleware is wired)
+        var bearer = context.Request.Headers.Authorization.FirstOrDefault();
+        if (bearer?.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase) == true
+            && int.TryParse(bearer[7..].Trim(), out var fromBearer))
+            return fromBearer;
+
+        return 1; // anonymous / default user
+    }
+
     // ── Shared receive loop ────────────────────────────────────────────────
 
     private async Task ReceiveLoopAsync(WebSocket webSocket, string connectionId, bool isPronunciation)
@@ -199,6 +219,12 @@ public class QuranRecitationWebSocketHandler
                     await _pronunciationService.WriteAudioAsync(connectionId, chunk);
                 else
                     await _speechService.WriteAudioAsync(connectionId, chunk);
+            }
+            else if (result.MessageType == WebSocketMessageType.Text && result.Count > 0 && isPronunciation)
+            {
+                var text = System.Text.Encoding.UTF8.GetString(buffer, 0, result.Count);
+                if (text.Contains("end-of-audio"))
+                    await _pronunciationService.CloseInputAsync(connectionId);
             }
         }
     }

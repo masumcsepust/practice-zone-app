@@ -21,16 +21,36 @@ export interface AyahDto {
   transliteration: string;
 }
 
+export interface ArabicLetterDto {
+  id: number;
+  order: number;
+  letter: string;
+  nameEnglish: string;
+  nameArabic: string;
+  nameBangla: string;
+  transliteration: string;
+  makhrajType: string;
+  makhrajDescription: string;
+  sifaat: string[];
+  exampleWordArabic: string;
+  exampleWord: string;
+  audioUrl: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class QuranApiService {
   private readonly http = inject(HttpClient);
-  private readonly base = 'http://localhost:5092/api/quran';
+  private readonly base = 'http://localhost:5092/api';
 
   getSurahs(): Observable<SurahDto[]> {
-    return this.http.get<SurahDto[]>(`${this.base}/surahs`);
+    return this.http.get<SurahDto[]>(`${this.base}/quran/surahs`);
   }
 
   getAyahs(surahId: number): Observable<AyahDto[]> {
-    return this.http.get<AyahDto[]>(`${this.base}/surahs/${surahId}/ayahs`);
+    return this.http.get<AyahDto[]>(`${this.base}/quran/surahs/${surahId}/ayahs`);
+  }
+
+  getLetters(): Observable<ArabicLetterDto[]> {
+    return this.http.get<ArabicLetterDto[]>(`${this.base}/arabic-letters`);
   }
 }

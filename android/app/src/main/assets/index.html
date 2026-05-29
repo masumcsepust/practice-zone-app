@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>QuranApp</title>
+  <style>
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
+      background: #E1F5EE;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    #app-container {
+      background: linear-gradient(180deg, #0F6E56 0%, #1D9E75 25%, #5DCAA5 60%, #E1F5EE 100%);
+      min-height: 100vh;
+      width: 100%;
+      padding: 20px 16px 30px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    .bg-shapes {
+      position: absolute;
+      top: -20px;
+      right: -30px;
+      width: 260px;
+      height: 220px;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .content-wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .stat-item {
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      padding: 10px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .tabs-nav {
+      background: rgba(255,255,255,0.9);
+      border-radius: 14px;
+      padding: 4px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .view-tab {
+      background: transparent;
+      border: none;
+      padding: 12px 2px;
+      cursor: pointer;
+      color: #444441;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .view-tab.active {
+      background: linear-gradient(135deg, #0F6E56, #1D9E75);
+      color: #FFF;
+      box-shadow: 0 4px 8px rgba(15, 110, 86, 0.2);
+    }
+
+    .lesson-panel {
+      background: #FFF;
+      border-radius: 20px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 20px rgba(15, 110, 86, 0.1);
+    }
+
+    .illustration-box {
+      background: linear-gradient(135deg, #F8FAFC 0%, #E6F1FB 100%);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pronunciation-box {
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      border-radius: 14px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #BAE6FD;
+    }
+
+    .letter-rail {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+      -webkit-overflow-scrolling: touch;
+    }
+    .letter-rail::-webkit-scrollbar { display: none; }
+
+    .footer-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: auto;
+      padding-top: 20px;
+    }
+
+    .view-panel { display: none; }
+    #view-lesson { display: block; }
+
+  </style>
+</head>
+<body>
+
+  <div id="app-container">
+    
+    <svg class="bg-shapes" viewBox="0 0 260 220" fill="none">
+      <circle cx="200" cy="40" r="80" stroke="#FFF" stroke-width="1" fill="none"/>
+      <circle cx="200" cy="40" r="50" stroke="#FFF" stroke-width="0.8" fill="none"/>
+      <path d="M20 60 Q70 30 130 60 T240 60" stroke="#FFF" stroke-width="0.8" fill="none"/>
+    </svg>
+
+    <div class="content-wrapper">
+
+      <div class="stats-bar">
+        <div class="stat-item"><span style="font-size: 16px;">🔥</span> <div style="font-size: 10px; font-weight: 700;">৬ দিন</div></div>
+        <div class="stat-item"><span style="font-size: 16px;">⭐</span> <div style="font-size: 10px; font-weight: 700;">১২৪০</div></div>
+        <div class="stat-item"><span style="font-size: 16px;">🏆</span> <div style="font-size: 10px; font-weight: 700;">লেভেল ৫</div></div>
+      </div>
+
+      <div class="tabs-nav">
+        <button class="view-tab active" data-view="lesson">পাঠ</button>
+        <button class="view-tab" data-view="forms">রূপ</button>
+        <button class="view-tab" data-view="practice">বলুন</button>
+        <button class="view-tab" data-view="write">লিখুন</button>
+      </div>
+
+      <div id="view-lesson" class="view-panel">
+        <div class="lesson-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div>
+              <p style="margin: 0; font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase;">আজকের পাঠ</p>
+              <p style="margin: 2px 0 0; font-size: 18px; font-weight: 700; color: #1E293B;">বর্ণ "বা" (ب)</p>
+            </div>
+            <button style="background: #E1F5EE; border: none; color: #0F6E56; padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; cursor: pointer;">🔊 শুনুন</button>
+          </div>
+
+          <div class="illustration-box">
+            <svg viewBox="0 0 120 120" width="100" height="100">
+              <circle cx="60" cy="60" r="50" fill="#E0F2FE" opacity="0.6"/>
+              <rect x="35" y="35" width="50" height="50" rx="15" fill="#FFF" stroke="#64748B" stroke-width="2"/>
+              <circle cx="48" cy="50" r="4" fill="#1E293B"/>
+              <circle cx="72" cy="50" r="4" fill="#1E293B"/>
+              <path d="M45 65 Q60 75 75 65" stroke="#F43F5E" stroke-width="2" fill="none"/>
+            </svg>
+            <div style="text-align: right;">
+              <p style="margin: 0; font-size: 32px; font-weight: 700; color: #0F6E56; direction: rtl;">بَقَرَة</p>
+              <p style="margin: 4px 0 0; font-size: 14px; color: #64748B; font-weight: 600;">বাকারাহ্ — গরু</p>
+            </div>
+          </div>
+
+          <div class="pronunciation-box">
+            <div style="font-size: 20px;">💡</div>
+            <p style="margin: 0; font-size: 13px; font-weight: 500; color: #0369A1; line-height: 1.5;">দুই ঠোঁটের ভিজা জায়গা থেকে 'বা' উচ্চারিত হয়।</p>
+          </div>
+        </div>
+
+        <div style="background: #FFF; border-radius: 16px; padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; font-weight: 700;">
+            <span>অগ্রগতি</span>
+            <span style="color: #0F6E56;">৬১%</span>
+          </div>
+          <div style="background: #F1F5F9; height: 8px; border-radius: 4px; overflow: hidden;">
+            <div style="background: linear-gradient(90deg, #1D9E75, #5DCAA5); height: 100%; width: 61%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="view-forms" class="view-panel" style="background: #FFF; padding: 20px; border-radius: 20px;">শব্দে অবস্থান পরিবর্তন প্যানেল।</div>
+      <div id="view-practice" class="view-panel" style="background: #FFF; padding: 20px; border-radius: 20px;">ভয়েস রেকর্ডার প্যানেল।</div>
+      <div id="view-write" class="view-panel" style="background: #FFF; padding: 20px; border-radius: 20px;">হস্তলিপি ক্যানভাস।</div>
+
+      <div style="margin-top: 16px;">
+        <p style="margin: 0 0 8px; font-size: 12px; color: #FFF; font-weight: 700;">আরবি বর্ণমালা</p>
+        <div id="letter-rail" class="letter-rail"></div>
+      </div>
+
+      <div class="footer-actions">
+        <button style="width: 50px; height: 50px; border-radius: 25px; background: #FFF; border: none; font-size: 18px; color: #64748B; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">◀</button>
+        <button style="flex: 1; background: #FFF; border: none; color: #0F6E56; padding: 15px; border-radius: 30px; font-size: 15px; font-weight: 700; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">পরবর্তী বর্ণ শিখুন ▶</button>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      const rail = document.getElementById('letter-rail');
+      const letters = ['ا', 'ب', 'ت', 'ث', 'ج'];
+      letters.forEach(l => {
+        const btn = document.createElement('div');
+        btn.style.cssText = `min-width: 56px; height: 56px; background: ${l === 'ب' ? '#E1F5EE' : '#FFF'}; border: ${l === 'ب' ? '2px solid #0F6E56' : 'none'}; border-radius: 14px; display: flex; justify-content: center; align-items: center; font-size: 20px; font-weight: 700; color: #1E293B; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.05); cursor: pointer;`;
+        btn.textContent = l;
+        rail.appendChild(btn);
+      });
+
+      document.querySelectorAll('.view-tab').forEach(tab => {
+        tab.onclick = () => {
+          document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          document.querySelectorAll('.view-panel').forEach(p => p.style.display = 'none');
+          document.getElementById('view-' + tab.dataset.view).style.display = 'block';
+        };
+      });
+    })();
+  </script>
+</body>
+</html>

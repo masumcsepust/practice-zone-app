@@ -1,0 +1,250 @@
+/* ── Layout ─────────────────────────────────────────────────────────── */
+.page {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  font-family: system-ui, sans-serif;
+  color: #e2e8f0;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────── */
+.header { text-align: center; margin-bottom: 1.5rem; }
+.title  { font-size: 1.75rem; font-weight: 700; color: #f1f5f9; margin: 0 0 0.25rem; }
+.subtitle { color: #94a3b8; font-size: 0.95rem; margin: 0; }
+
+/* ── Card ───────────────────────────────────────────────────────────── */
+.card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.card-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  margin-bottom: 0.75rem;
+}
+
+/* ── Letter grid ────────────────────────────────────────────────────── */
+.letter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 0.5rem;
+}
+
+.letter-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.6rem 0.4rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  color: #e2e8f0;
+}
+.letter-btn:hover:not(:disabled) {
+  border-color: #6366f1;
+  background: #1e293b;
+}
+.letter-btn.selected {
+  border-color: #6366f1;
+  background: #1e1b4b;
+  box-shadow: 0 0 0 2px #6366f155;
+}
+.letter-btn:disabled { opacity: 0.5; cursor: default; }
+
+.letter-arabic {
+  font-size: 1.6rem;
+  line-height: 1;
+  font-family: 'Amiri', 'Scheherazade New', serif;
+}
+.letter-name { font-size: 0.65rem; color: #94a3b8; }
+
+/* ── Letter info card ───────────────────────────────────────────────── */
+.letter-info-card { display: flex; align-items: flex-start; gap: 1.25rem; }
+
+.letter-display {
+  font-size: 3.5rem;
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  color: #a78bfa;
+  min-width: 3rem;
+  text-align: center;
+  line-height: 1;
+}
+
+.letter-meta { flex: 1; display: flex; flex-direction: column; gap: 0.4rem; }
+.meta-row { display: flex; gap: 0.5rem; align-items: baseline; font-size: 0.875rem; }
+.meta-label { color: #64748b; width: 4.5rem; flex-shrink: 0; font-size: 0.75rem; }
+.meta-val { color: #cbd5e1; }
+
+/* ── Audio button ───────────────────────────────────────────────────── */
+.btn-audio {
+  background: #1d4ed8;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-audio:hover { background: #2563eb; }
+
+/* ── Status bar ─────────────────────────────────────────────────────── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+.status-dot {
+  width: 0.6rem; height: 0.6rem;
+  border-radius: 50%;
+  background: #64748b;
+  flex-shrink: 0;
+}
+.status-bar.connected    .status-dot { background: #22c55e; }
+.status-bar.connecting   .status-dot { background: #f59e0b; }
+.status-bar.error        .status-dot { background: #ef4444; }
+.status-bar.disconnected .status-dot { background: #64748b; }
+
+/* ── Error ──────────────────────────────────────────────────────────── */
+.error-box {
+  background: #450a0a;
+  border: 1px solid #b91c1c;
+  color: #fca5a5;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* ── Controls ───────────────────────────────────────────────────────── */
+.controls { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+.btn-connect    { background: #16a34a; color: #fff; }
+.btn-disconnect { background: #dc2626; color: #fff; }
+.btn-record     { background: #7c3aed; color: #fff; }
+.btn-stop       { background: #d97706; color: #fff; }
+.btn-clear      { background: #334155; color: #e2e8f0; }
+
+/* ── Recording indicator ────────────────────────────────────────────── */
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: #3b0764;
+  border: 1px solid #7c3aed;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  color: #ddd6fe;
+  margin-bottom: 1rem;
+}
+.pulse-dot {
+  width: 0.7rem; height: 0.7rem;
+  border-radius: 50%;
+  background: #a855f7;
+  animation: pulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* ── Result card ────────────────────────────────────────────────────── */
+.result-card {
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  border: 2px solid;
+}
+.result-card.correct   { background: #052e16; border-color: #16a34a; }
+.result-card.incorrect { background: #450a0a; border-color: #dc2626; }
+
+.result-verdict {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.verdict-icon { font-size: 1.5rem; }
+.verdict-text { font-size: 1.4rem; font-weight: 700; }
+.correct-text   { color: #4ade80; }
+.incorrect-text { color: #f87171; }
+
+.result-letter {
+  font-size: 4rem;
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  line-height: 1;
+  margin-bottom: 0.25rem;
+}
+.result-card.correct   .result-letter { color: #86efac; }
+.result-card.incorrect .result-letter { color: #fca5a5; }
+
+.result-name {
+  font-size: 1rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+  font-family: 'Amiri', 'Scheherazade New', serif;
+}
+
+.score-row {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.score-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  color: #fff;
+}
+.score-num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+.score-lbl { font-size: 0.7rem; opacity: 0.85; }
+
+.recognized-row {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+}
+.recognized-text {
+  font-family: 'Amiri', 'Scheherazade New', serif;
+  font-size: 1rem;
+  color: #e2e8f0;
+}
+
+.feedback-text {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
