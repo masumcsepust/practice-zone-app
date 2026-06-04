@@ -9,21 +9,24 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.example.quran_app.ui.navigation.Screen
+import com.example.quran_app.ui.screens.auth.LoginScreen
+import com.example.quran_app.ui.screens.auth.RegisterScreen
 import com.example.quran_app.ui.screens.home.HomeScreen
 import com.example.quran_app.ui.screens.letters.ArabicLettersScreen
-import com.example.quran_app.ui.screens.quran.AyahListScreen
-import com.example.quran_app.ui.screens.quran.AyahRecitationScreen
-import com.example.quran_app.ui.screens.quran.SurahListScreen
+import com.example.quran_app.ui.screens.letters.SukoonLessonScreen
+import com.example.quran_app.ui.screens.letters.TajweedProgressScreen
+import com.example.quran_app.ui.screens.letters.TajweedScreen
 import com.example.quran_app.ui.theme.QuranappTheme
 import com.example.quran_app.ui.viewmodel.ArabicLettersViewModel
-import com.example.quran_app.ui.viewmodel.AyahRecitationViewModel
-import java.net.URLDecoder
+import com.example.quran_app.ui.viewmodel.AuthViewModel
+import com.example.quran_app.data.remote.RetrofitClient
+import com.example.quran_app.ui.viewmodel.PracticeLessonViewModel
+import com.example.quran_app.ui.viewmodel.ProfileViewModel
+import com.example.quran_app.ui.viewmodel.TanweenLessonViewModel
 
 class MainActivity : ComponentActivity() {
     private lateinit var appContainer: AppContainer
@@ -36,103 +39,147 @@ class MainActivity : ComponentActivity() {
             QuranappTheme {
                 val navController = rememberNavController()
 
-                // Shared ViewModel scoped to this Activity — persists across all Quran screens
-                val ayahViewModel: AyahRecitationViewModel = viewModel(
-                    factory = object : ViewModelProvider.Factory {
-                        @Suppress("UNCHECKED_CAST")
-                        override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                            AyahRecitationViewModel(
-                                appContainer.quranRepository,
-                                appContainer.ayahRecorder,
-                                appContainer.ayahWsClient
-                            ) as T
-                    }
-                )
-
                 NavHost(
                     navController    = navController,
-                    startDestination = Screen.Home.route,
+                    startDestination = Screen.Home.route,   // always start on Home
                     modifier         = Modifier.fillMaxSize()
                 ) {
 
-                    // ── Home ─────────────────────────────────────────────
+                    // ── Home (with Profile tab wired) ─────────────────────────
                     composable(Screen.Home.route) {
+                        val lessonVm: TanweenLessonViewModel = viewModel(
+                            key = "tanween_home", factory = tanweenVmFactory())
+                        val profileVm: ProfileViewModel = viewModel(
+                            key = "profile", factory = profileVmFactory())
+                        val practiceVm: PracticeLessonViewModel = viewModel(
+                            key = "practice", factory = practiceVmFactory())
+
+                        // Reload profile when returning from login
+                        val refreshProfile = it.savedStateHandle.get<Boolean>("refresh_profile")
+                        if (refreshProfile == true) {
+                            it.savedStateHandle.remove<Boolean>("refresh_profile")
+                            profileVm.load()
+                        }
+
                         HomeScreen(
-                            onLetterLearning = { navController.navigate(Screen.ArabicLetters.route) },
-                            onAyahRecitation = { navController.navigate(Screen.SurahList.route) }
+                            onLetterLearning        = { navController.navigate(Screen.ArabicLetters.route) },
+                            onTajweed               = { navController.navigate(Screen.Tajweed.route) },
+                            lessonViewModel         = lessonVm,
+                            practiceLessonViewModel = practiceVm,
+                            profileViewModel        = profileVm,
+                            onGoLogin               = { navController.navigate(Screen.Login.route) },
+                            onGoRegister            = { navController.navigate(Screen.Register.route) },
                         )
                     }
 
-                    // ── Arabic Letters ────────────────────────────────────
-                    composable(Screen.ArabicLetters.route) {
-                        val lettersViewModel: ArabicLettersViewModel = viewModel(
-                            factory = object : ViewModelProvider.Factory {
-                                @Suppress("UNCHECKED_CAST")
-                                override fun <T : ViewModel> create(modelClass: Class<T>): T =
-                                    ArabicLettersViewModel(
-                                        appContainer.quranRepository,
-                                        appContainer.audioPlayer,
-                                        appContainer.letterRecorder,
-                                        appContainer.wsClient
-                                    ) as T
-                            }
+                    // ── Auth (optional — accessed from Profile tab) ────────────
+                    composable(Screen.Login.route) {
+                        val authVm: AuthViewModel = viewModel(factory = authVmFactory())
+                        LoginScreen(
+                            viewModel      = authVm,
+                            onLoginSuccess = {
+                                // Reload profile then go back to Home
+                                navController.previousBackStackEntry
+                                    ?.savedStateHandle
+                                    ?.set("refresh_profile", true)
+                                navController.popBackStack()
+                            },
+                            onGoRegister = { navController.navigate(Screen.Register.route) },
+                            onSkip       = { navController.popBackStack() }
                         )
+                    }
+
+                    composable(Screen.Register.route) {
+                        val authVm: AuthViewModel = viewModel(factory = authVmFactory())
+                        RegisterScreen(
+                            viewModel         = authVm,
+                            onRegisterSuccess = {
+                                navController.popBackStack(Screen.Home.route, inclusive = false)
+                            },
+                            onGoLogin = { navController.popBackStack() }
+                        )
+                    }
+
+                    // ── Letter learning ───────────────────────────────────────
+                    composable(Screen.ArabicLetters.route) {
                         ArabicLettersScreen(
-                            viewModel = lettersViewModel,
+                            viewModel = viewModel(factory = lettersVmFactory()),
                             onBack    = { navController.popBackStack() }
                         )
                     }
 
-                    // ── Surah list ────────────────────────────────────────
-                    composable(Screen.SurahList.route) {
-                        SurahListScreen(
-                            viewModel       = ayahViewModel,
-                            onBack          = { navController.popBackStack() },
-                            onSurahSelected = { surahId, surahName ->
-                                navController.navigate(Screen.AyahList.createRoute(surahId, surahName))
-                            }
+                    composable(Screen.Tajweed.route) {
+                        TajweedScreen(
+                            viewModel   = viewModel(factory = lettersVmFactory()),
+                            onBack      = { navController.popBackStack() },
+                            onShowTable = { navController.navigate(Screen.TajweedProgress.route) }
                         )
                     }
 
-                    // ── Ayah list ─────────────────────────────────────────
-                    composable(
-                        route     = Screen.AyahList.route,
-                        arguments = listOf(
-                            navArgument("surahId")   { type = NavType.IntType },
-                            navArgument("surahName") { type = NavType.StringType }
-                        )
-                    ) { backStackEntry ->
-                        val surahId   = backStackEntry.arguments?.getInt("surahId") ?: return@composable
-                        val surahName = URLDecoder.decode(
-                            backStackEntry.arguments?.getString("surahName") ?: "", "UTF-8"
-                        )
-                        AyahListScreen(
-                            surahId        = surahId,
-                            surahName      = surahName,
-                            viewModel      = ayahViewModel,
-                            onBack         = { navController.popBackStack() },
-                            onAyahSelected = { ayahId ->
-                                navController.navigate(Screen.AyahRecitation.createRoute(ayahId))
-                            }
+                    composable(Screen.TajweedProgress.route) {
+                        TajweedProgressScreen(
+                            viewModel = viewModel(key = "tajweed", factory = lettersVmFactory()),
+                            onBack    = { navController.popBackStack() }
                         )
                     }
 
-                    // ── Ayah recitation ───────────────────────────────────
-                    composable(
-                        route     = Screen.AyahRecitation.route,
-                        arguments = listOf(
-                            navArgument("ayahId") { type = NavType.IntType }
-                        )
-                    ) { backStackEntry ->
-                        val ayahId = backStackEntry.arguments?.getInt("ayahId") ?: return@composable
-                        AyahRecitationScreen(
-                            ayahId    = ayahId,
-                            viewModel = ayahViewModel,
+                    composable(Screen.SukoonLesson.route) {
+                        SukoonLessonScreen(
+                            viewModel = viewModel(factory = lettersVmFactory()),
                             onBack    = { navController.popBackStack() }
                         )
                     }
                 }
             }
         }
+    }
+
+    // ── ViewModel factories ────────────────────────────────────────────────────
+
+    private fun practiceVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            PracticeLessonViewModel(
+                appContainer.quranRepository,
+                appContainer.audioPlayer
+            ) as T
+    }
+
+    private fun authVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            AuthViewModel(appContainer.authRepository) as T
+    }
+
+    private fun profileVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            ProfileViewModel(
+                RetrofitClient.apiService,
+                appContainer.tokenManager,
+                appContainer.authRepository
+            ) as T
+    }
+
+    private fun lettersVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            ArabicLettersViewModel(
+                appContainer.quranRepository,
+                appContainer.audioPlayer,
+                appContainer.letterRecorder,
+                appContainer.wsClient
+            ) as T
+    }
+
+    private fun tanweenVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            TanweenLessonViewModel(
+                appContainer.quranRepository,
+                appContainer.audioPlayer,
+                appContainer.letterRecorder,
+                appContainer.wsClient
+            ) as T
     }
 }

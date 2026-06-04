@@ -62,7 +62,7 @@ public class LetterPracticeWebSocketHandler
 
         // ── Validate letterId ────────────────────────────────────────────────
         var letterIdStr = context.Request.Query["letterId"].FirstOrDefault();
-        if (!int.TryParse(letterIdStr, out var letterId))
+        if (!Guid.TryParse(letterIdStr, out var letterId))
         {
             await SendErrorAsync(webSocket, "Missing or invalid letterId query parameter.");
             await webSocket.CloseAsync(WebSocketCloseStatus.PolicyViolation, "Bad request", CancellationToken.None);
@@ -83,7 +83,7 @@ public class LetterPracticeWebSocketHandler
         }
 
         _logger.LogInformation("[{Id}] Letter practice WS — {Letter} ({Name})",
-            connectionId, letter.Letter, letter.NameArabic);
+            connectionId, letter.Character, letter.NameArabic);
 
         try
         {
@@ -191,16 +191,16 @@ public class LetterPracticeWebSocketHandler
             return new
             {
                 type               = "letter-result",
-                letter             = letter.Letter,
+                letter             = letter.Character,
                 letterName         = letter.NameArabic,
-                letterNameBn       = letter.NameBangla,
+                letterNameBn       = letter.Name.Bn,
                 recognizedText     = "",
                 pronunciationScore = 0.0,
                 accuracyScore      = 0.0,
                 isCorrect          = false,
                 feedback           = "Nothing heard. Please speak louder and closer to the mic.",
                 feedbackBn         = "কিছু শোনা যায়নি। মাইকের কাছে আরও জোরে বলার চেষ্টা করুন।",
-                makhrajHint        = letter.MakhrajDescriptionBn
+                makhrajHint        = letter.MakhrajDescription.Bn
             };
         }
 
@@ -223,8 +223,8 @@ public class LetterPracticeWebSocketHandler
             var weakHint = weakCount > 0
                 ? $" (weak sound{(weakCount > 1 ? "s" : "")}: {string.Join(", ", pa.WeakPhonemes.Select(p => p.Phoneme))})"
                 : string.Empty;
-            feedback   = $"Incorrect. I heard \"{heard}\" but it doesn't match {letter.NameEnglish} ({letter.Letter}).{weakHint} Try again.";
-            feedbackBn = $"ভুল! আমি \"{heard}\" শুনেছি কিন্তু {letter.NameEnglish} ({letter.Letter})-এর সাথে মেলেনি। আবার চেষ্টা করুন।";
+            feedback   = $"Incorrect. I heard \"{heard}\" but it doesn't match {letter.Name.En} ({letter.Character}).{weakHint} Try again.";
+            feedbackBn = $"ভুল! আমি \"{heard}\" শুনেছি কিন্তু {letter.Name.En} ({letter.Character})-এর সাথে মেলেনি। আবার চেষ্টা করুন।";
         }
         else
         {
@@ -252,16 +252,16 @@ public class LetterPracticeWebSocketHandler
         return new
         {
             type               = "letter-result",
-            letter             = letter.Letter,
+            letter             = letter.Character,
             letterName         = letter.NameArabic,
-            letterNameBn       = letter.NameBangla,
+            letterNameBn       = letter.Name.Bn,
             recognizedText     = heard,
             pronunciationScore = Math.Round(penalisedScore, 1),
             accuracyScore      = pa.AccuracyScore,
             isCorrect,
             feedback,
             feedbackBn,
-            makhrajHint        = letter.MakhrajDescriptionBn
+            makhrajHint        = letter.MakhrajDescription.Bn
         };
     }
 

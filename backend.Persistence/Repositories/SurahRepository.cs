@@ -15,4 +15,7 @@ public class SurahRepository : ISurahRepository
 
     public async Task<Surah?> GetByIdAsync(int id, CancellationToken ct = default)
         => await _ctx.Surahs.FirstOrDefaultAsync(s => s.Id == id, ct);
+
+    public async Task<Surah?> GetBySurahNumberAsync(int surahNumber, CancellationToken ct = default)
+        => await _ctx.Surahs.FirstOrDefaultAsync(s => s.SurahNumber == surahNumber, ct);
 }

@@ -8,7 +8,11 @@ import com.example.quran_app.domain.model.DrawingResult
 import com.example.quran_app.domain.model.LetterForms
 import com.example.quran_app.domain.model.PagedResponse
 import com.example.quran_app.domain.model.PronunciationResult
+import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
+import com.example.quran_app.domain.model.TajweedLetterProgress
+import com.example.quran_app.domain.model.PracticeSessionData
+import com.example.quran_app.domain.model.TanweenLessonData
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -22,11 +26,11 @@ class QuranRepository(private val apiService: QuranApiService) {
         apiService.getArabicLetters(page, pageSize)
     }
 
-    suspend fun getLetterForms(id: Int): Result<LetterForms> = runCatching {
+    suspend fun getLetterForms(id: String): Result<LetterForms> = runCatching {
         apiService.getLetterForms(id)
     }
 
-    suspend fun checkDrawing(id: Int, imageBase64: String): Result<DrawingResult> = runCatching {
+    suspend fun checkDrawing(id: String, imageBase64: String): Result<DrawingResult> = runCatching {
         apiService.checkDrawing(id, DrawingCheckRequest(imageBase64))
     }
 
@@ -39,7 +43,7 @@ class QuranRepository(private val apiService: QuranApiService) {
      *  .mp4 → audio/mp4   (Android < 10 fallback)
      *  .wav → audio/wav
      */
-    suspend fun checkPronunciation(id: Int, audioFile: File): Result<PronunciationResult> =
+    suspend fun checkPronunciation(id: String, audioFile: File): Result<PronunciationResult> =
         runCatching {
             val mime = when (audioFile.extension.lowercase()) {
                 "ogg"  -> "audio/ogg"
@@ -59,5 +63,38 @@ class QuranRepository(private val apiService: QuranApiService) {
 
     suspend fun getAyahs(surahId: Int): Result<List<Ayah>> = runCatching {
         apiService.getAyahs(surahId)
+    }
+
+    suspend fun getPage(pageNumber: Int): Result<List<Ayah>> = runCatching {
+        apiService.getPage(pageNumber)
+    }
+
+    suspend fun saveTajweedProgress(
+        letterId:     String,
+        mode:         String,
+        score:        Double,
+        accuracyScore: Double,
+        isCorrect:    Boolean,
+    ): Result<Unit> = runCatching {
+        apiService.saveTajweedProgress(
+            letterId,
+            SaveTajweedProgressRequest(mode, score, accuracyScore, isCorrect)
+        )
+    }
+
+    suspend fun getTajweedProgress(): Result<List<TajweedLetterProgress>> = runCatching {
+        apiService.getTajweedProgress()
+    }
+
+    suspend fun getTanweenLesson(letterOrder: Int): Result<TanweenLessonData> = runCatching {
+        apiService.getTanweenLesson(letterOrder).data
+    }
+
+    suspend fun getPracticeLessons(): Result<List<PracticeSessionData>> = runCatching {
+        apiService.getPracticeLessons().data
+    }
+
+    suspend fun getPracticeLesson(id: String): Result<PracticeSessionData> = runCatching {
+        apiService.getPracticeLesson(id).data
     }
 }

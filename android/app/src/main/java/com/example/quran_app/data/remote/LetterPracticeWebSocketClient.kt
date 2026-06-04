@@ -26,7 +26,7 @@ class LetterPracticeWebSocketClient {
     private var activeSocket: WebSocket? = null
 
     fun assess(
-        letterId:  Int,
+        letterId:  String,
         audioFile: File,
         onResult:  (PronunciationResult) -> Unit,
         onError:   (String) -> Unit

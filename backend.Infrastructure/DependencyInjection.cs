@@ -1,5 +1,6 @@
 using backend.Application.Interfaces;
 using backend.Infrastructure.AI;
+using backend.Infrastructure.Auth;
 using backend.Infrastructure.Speech;
 using backend.Infrastructure.Storage;
 using backend.Infrastructure.Tajweed;
@@ -11,6 +12,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services)
     {
+        services.AddScoped<IJwtService, JwtService>();
+
         services.AddScoped<IArabicLetterTtsService, ArabicLetterTtsService>();
 
         // Semantic Kernel — Azure OpenAI letter explanation (singleton: Kernel is thread-safe)

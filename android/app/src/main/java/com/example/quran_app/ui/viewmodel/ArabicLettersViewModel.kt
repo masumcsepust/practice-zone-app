@@ -9,6 +9,7 @@ import com.example.quran_app.domain.model.DrawingState
 import com.example.quran_app.domain.model.LetterForms
 import com.example.quran_app.domain.model.PronunciationResult
 import com.example.quran_app.domain.model.SpeakState
+import com.example.quran_app.domain.model.TajweedLetterProgress
 import com.example.quran_app.util.AudioPlayer
 import com.example.quran_app.util.LetterRecorder
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +74,13 @@ class ArabicLettersViewModel(
     // ── Drawing (লিখুন tab) ───────────────────────────────────────────────────
     private val _drawingState  = MutableStateFlow<DrawingState>(DrawingState.Idle)
     val drawingState: StateFlow<DrawingState> = _drawingState.asStateFlow()
+
+    // ── Tajweed progress table ────────────────────────────────────────────────
+    private val _tajweedProgress = MutableStateFlow<List<TajweedLetterProgress>>(emptyList())
+    val tajweedProgress: StateFlow<List<TajweedLetterProgress>> = _tajweedProgress.asStateFlow()
+
+    private val _tajweedProgressLoading = MutableStateFlow(false)
+    val tajweedProgressLoading: StateFlow<Boolean> = _tajweedProgressLoading.asStateFlow()
 
     private var recordingFile: File? = null
     private val BASE_URL = "http://localhost:5092"
@@ -145,7 +153,7 @@ class ArabicLettersViewModel(
 
     // ── Public: forms ─────────────────────────────────────────────────────────
 
-    fun fetchLetterForms(id: Int) {
+    fun fetchLetterForms(id: String) {
         if (_letterForms.value?.id == id) return
         viewModelScope.launch {
             _formsLoading.value = true
@@ -168,7 +176,7 @@ class ArabicLettersViewModel(
         }
     }
 
-    fun stopAndAssess(letterId: Int) {
+    fun stopAndAssess(letterId: String) {
         _speakState.value = SpeakState.Processing
         val file = recorder.stop() ?: run {
             _speakState.value = SpeakState.Error("রেকর্ড ফাইল পাওয়া যায়নি")
@@ -199,7 +207,7 @@ class ArabicLettersViewModel(
 
     // ── Public: drawing ───────────────────────────────────────────────────────
 
-    fun checkDrawing(letterId: Int, imageBase64: String) {
+    fun checkDrawing(letterId: String, imageBase64: String) {
         _drawingState.value = DrawingState.Submitting
         viewModelScope.launch {
             repository.checkDrawing(letterId, imageBase64)
@@ -210,6 +218,29 @@ class ArabicLettersViewModel(
 
     fun resetDrawing() {
         _drawingState.value = DrawingState.Idle
+    }
+
+    // ── Tajweed progress ──────────────────────────────────────────────────────
+
+    fun recordTajweedProgress(letterId: String, mode: String, result: PronunciationResult) {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.saveTajweedProgress(
+                letterId      = letterId,
+                mode          = mode,
+                score         = result.score,
+                accuracyScore = result.accuracyScore,
+                isCorrect     = result.isCorrect,
+            )
+        }
+    }
+
+    fun fetchTajweedProgress() {
+        viewModelScope.launch {
+            _tajweedProgressLoading.value = true
+            repository.getTajweedProgress()
+                .onSuccess { _tajweedProgress.value = it }
+            _tajweedProgressLoading.value = false
+        }
     }
 
     // ── Audio playback ────────────────────────────────────────────────────────

@@ -2,17 +2,17 @@ package com.example.quran_app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ── Arabic Learning App brand palette — Amber (বলুন) ──────────────────────
-val AppPrimary      = Color(0xFFD97706)   // amber
-val AppDark         = Color(0xFF92400E)   // dark amber (button shadow)
-val AppSecondary    = Color(0xFFF59E0B)   // mid amber / gold
-val AppAccent       = Color(0xFFFBBF24)   // bright yellow-amber
-val AppBgLight      = Color(0xFFFEF3C7)   // pale amber tint
+// ── Arabic Learning App brand palette — Medium Green ──────────────────────
+val AppPrimary      = Color(0xFF16A34A)   // green-600  (medium, white text readable)
+val AppDark         = Color(0xFF14532D)   // green-900  (very dark for buttons/text)
+val AppSecondary    = Color(0xFF22C55E)   // green-500
+val AppAccent       = Color(0xFF4ADE80)   // green-400
+val AppBgLight      = Color(0xFFDCFCE7)   // green-100
 val GlassWhite      = Color(0xF2FFFFFF)   // 95% white (glassmorphic cards)
 val NavyText        = Color(0xFF1E293B)   // headings
 val SlateGrey       = Color(0xFF64748B)   // secondary text
-val SkyBlueAlert    = Color(0xFFFFFBEB)   // info alert bg  (warm tint)
-val SkyBlueBorder   = Color(0xFFFDE68A)   // info alert border
-val SkyBlueDark     = Color(0xFF78350F)   // info alert text (dark amber)
-val GreenTintBg     = Color(0xFFFEF9C3)   // illustration box bg
-val GreenTintBorder = Color(0xFFFDE047)   // illustration box border
+val SkyBlueAlert    = Color(0xFFF0FDF4)   // info alert bg
+val SkyBlueBorder   = Color(0xFFBBF7D0)   // info alert border
+val SkyBlueDark     = Color(0xFF14532D)   // info alert text
+val GreenTintBg     = Color(0xFFDCFCE7)   // illustration box bg
+val GreenTintBorder = Color(0xFF86EFAC)   // illustration box border

@@ -1,13 +1,22 @@
 package com.example.quran_app.data.remote
 
 import com.example.quran_app.domain.model.ArabicLetter
+import com.example.quran_app.domain.model.AuthResponse
+import com.example.quran_app.domain.model.PracticeListResponse
+import com.example.quran_app.domain.model.PracticeSessionResponse
+import com.example.quran_app.domain.model.LoginRequest
+import com.example.quran_app.domain.model.RegisterRequest
+import com.example.quran_app.domain.model.TanweenLessonResponse
 import com.example.quran_app.domain.model.Ayah
 import com.example.quran_app.domain.model.DrawingCheckRequest
 import com.example.quran_app.domain.model.DrawingResult
 import com.example.quran_app.domain.model.LetterForms
 import com.example.quran_app.domain.model.PagedResponse
 import com.example.quran_app.domain.model.PronunciationResult
+import com.example.quran_app.domain.model.UserInfo
+import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
+import com.example.quran_app.domain.model.TajweedLetterProgress
 import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -18,6 +27,18 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface QuranApiService {
+
+    // ── Auth ─────────────────────────────────────────────────────────────────
+    @POST("api/auth/register")
+    suspend fun register(@Body body: RegisterRequest): AuthResponse
+
+    @POST("api/auth/login")
+    suspend fun login(@Body body: LoginRequest): AuthResponse
+
+    @GET("api/auth/me")
+    suspend fun me(): UserInfo
+
+    // ── Letters ───────────────────────────────────────────────────────────────
     @GET("api/arabic-letters")
     suspend fun getArabicLetters(
         @Query("page")     page:     Int = 1,
@@ -25,14 +46,14 @@ interface QuranApiService {
     ): PagedResponse<ArabicLetter>
 
     @GET("api/arabic-letters/{id}")
-    suspend fun getArabicLetter(@Path("id") id: Int): ArabicLetter
+    suspend fun getArabicLetter(@Path("id") id: String): ArabicLetter
 
     @GET("api/arabic-letters/{id}/forms")
-    suspend fun getLetterForms(@Path("id") id: Int): LetterForms
+    suspend fun getLetterForms(@Path("id") id: String): LetterForms
 
     @POST("api/arabic-letters/{id}/check-drawing")
     suspend fun checkDrawing(
-        @Path("id") id: Int,
+        @Path("id") id: String,
         @Body body: DrawingCheckRequest
     ): DrawingResult
 
@@ -40,7 +61,7 @@ interface QuranApiService {
     @Multipart
     @POST("api/arabic-letters/{id}/check-pronunciation")
     suspend fun checkPronunciation(
-        @Path("id") id: Int,
+        @Path("id") id: String,
         @Part audio: MultipartBody.Part
     ): PronunciationResult
 
@@ -49,4 +70,26 @@ interface QuranApiService {
 
     @GET("api/quran/surahs/{surahId}/ayahs")
     suspend fun getAyahs(@Path("surahId") surahId: Int): List<Ayah>
+
+    @GET("api/quran/pages/{pageNumber}")
+    suspend fun getPage(@Path("pageNumber") pageNumber: Int): List<Ayah>
+
+    @POST("api/arabic-letters/{id}/tajweed-progress")
+    suspend fun saveTajweedProgress(
+        @Path("id") id: String,
+        @Body body: SaveTajweedProgressRequest
+    )
+
+    @GET("api/arabic-letters/tajweed-progress")
+    suspend fun getTajweedProgress(): List<TajweedLetterProgress>
+
+    @GET("api/lessons/tanween/{letterOrder}")
+    suspend fun getTanweenLesson(@Path("letterOrder") letterOrder: Int): TanweenLessonResponse
+
+    // ── Practice lessons ──────────────────────────────────────────────────────
+    @GET("api/practice/lessons")
+    suspend fun getPracticeLessons(): PracticeListResponse
+
+    @GET("api/practice/lessons/{id}")
+    suspend fun getPracticeLesson(@Path("id") id: String): PracticeSessionResponse
 }

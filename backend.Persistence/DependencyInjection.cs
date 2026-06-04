@@ -16,6 +16,10 @@ public static class DependencyInjection
         services.AddScoped<IAyahRepository, AyahRepository>();
         services.AddScoped<ISurahRepository, SurahRepository>();
         services.AddScoped<IArabicLetterRepository, ArabicLetterRepository>();
+        services.AddScoped<ILessonRepository, LessonRepository>();
+        services.AddScoped<ITajweedProgressRepository, TajweedProgressRepository>();
+        services.AddScoped<ILessonPracticeRepository, LessonPracticeRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRecitationSessionRepository, RecitationSessionRepository>();
         services.AddScoped<StreamingSessionRepository>();
         services.AddScoped<PronunciationRepository>();

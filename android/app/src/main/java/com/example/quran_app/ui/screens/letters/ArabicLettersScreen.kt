@@ -66,22 +66,22 @@ import com.example.quran_app.ui.theme.*
 import com.example.quran_app.ui.viewmodel.ArabicLettersViewModel
 import java.io.ByteArrayOutputStream
 
-// ── Unified amber/orange theme (বলুন color used everywhere) ──────────────
-private val SpeakAccent      = Color(0xFFD97706)
-private val SpeakDark        = Color(0xFF92400E)
-private val SpeakLight       = Color(0xFFFFFBEB)
-private val SpeakBorder      = Color(0xFFFDE68A)
+// ── Unified green theme (বলুন color used everywhere) ─────────────────────
+private val SpeakAccent      = Color(0xFF16A34A)   // green-600 — readable on white
+private val SpeakDark        = Color(0xFF14532D)   // green-900 — dark heading text
+private val SpeakLight       = Color(0xFFF0FDF4)
+private val SpeakBorder      = Color(0xFFBBF7D0)
 private val SpeakRecording   = Color(0xFFEF4444)
 private val SpeakSuccess     = Color(0xFF16A34A)
 private val SpeakFail        = Color(0xFFDC2626)
 
-// রূপ panel — same amber theme
+// রূপ panel — same green theme
 private val FormsAccent      = SpeakAccent
 private val FormsDark        = SpeakDark
 private val FormsLight       = SpeakLight
 private val FormsBorder      = SpeakBorder
-private val FormsBadgeBg     = Color(0xFFFEF3C7)
-private val FormsCardBg      = Color(0xFFFFFBEB)
+private val FormsBadgeBg     = Color(0xFFD1FAE5)
+private val FormsCardBg      = Color(0xFFECFDF5)
 
 // লিখুন panel — same amber theme
 private val WriteAccent      = SpeakAccent
@@ -1401,7 +1401,7 @@ private fun ProgressSection(current: Int, total: Int) {
 }
 
 @Composable
-private fun LetterRailSection(
+internal fun LetterRailSection(
     letters:          List<ArabicLetter>,
     selectedLetter:   ArabicLetter?,
     selectedIndex:    Int,
@@ -2088,3 +2088,4 @@ private fun InfoChip(label: String, value: String, modifier: Modifier = Modifier
         Text(value, fontSize = 13.sp, color = NavyText, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
+

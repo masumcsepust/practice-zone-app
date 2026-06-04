@@ -2,8 +2,6 @@ using backend.Application.DTOs;
 using backend.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
-// LetterFormsDto is in backend.Application.DTOs — same namespace, no extra using needed
-
 namespace backend.API.Controllers;
 
 [ApiController]
@@ -15,6 +13,7 @@ public class ArabicLetterController : ControllerBase
     private readonly ILetterExplanationService   _explanation;
     private readonly ILetterDrawingService       _drawing;
     private readonly ILetterPronunciationService _pronunciation;
+    private readonly ITajweedProgressRepository  _tajweedProgress;
     private readonly ILogger<ArabicLetterController> _logger;
 
     public ArabicLetterController(
@@ -23,20 +22,18 @@ public class ArabicLetterController : ControllerBase
         ILetterExplanationService   explanation,
         ILetterDrawingService       drawing,
         ILetterPronunciationService pronunciation,
+        ITajweedProgressRepository  tajweedProgress,
         ILogger<ArabicLetterController> logger)
     {
-        _repo          = repo;
-        _tts           = tts;
-        _explanation   = explanation;
-        _drawing       = drawing;
-        _pronunciation = pronunciation;
-        _logger        = logger;
+        _repo            = repo;
+        _tts             = tts;
+        _explanation     = explanation;
+        _drawing         = drawing;
+        _pronunciation   = pronunciation;
+        _tajweedProgress = tajweedProgress;
+        _logger          = logger;
     }
 
-    /// <summary>
-    /// GET /api/arabic-letters?page=1&amp;pageSize=10
-    /// Returns one page of letters.  Defaults: page=1, pageSize=10, max pageSize=50.
-    /// </summary>
     [HttpGet]
     public async Task<PagedResult<ArabicLetterDto>> GetAll(
         [FromQuery] int page     = 1,
@@ -51,23 +48,16 @@ public class ArabicLetterController : ControllerBase
             paged.TotalCount);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id, CancellationToken ct)
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
     {
         var letter = await _repo.GetByIdAsync(id, ct);
         if (letter is null) return NotFound();
         return Ok(ToDto(letter));
     }
 
-    // ── AI explanation endpoint ───────────────────────────────────────────────
-
-    /// <summary>
-    /// GET /api/arabic-letters/{id}/explanation
-    /// Uses Semantic Kernel (Azure OpenAI) to produce a detailed bilingual
-    /// (English + Bangla) explanation of the letter's makhraj, sifaat, and forms.
-    /// </summary>
-    [HttpGet("{id:int}/explanation")]
-    public async Task<IActionResult> GetExplanation(int id, CancellationToken ct)
+    [HttpGet("{id:guid}/explanation")]
+    public async Task<IActionResult> GetExplanation(Guid id, CancellationToken ct)
     {
         var letter = await _repo.GetByIdAsync(id, ct);
         if (letter is null) return NotFound();
@@ -77,41 +67,21 @@ public class ArabicLetterController : ControllerBase
         return Ok(explanation);
     }
 
-    // ── Positional-forms endpoints ────────────────────────────────────────────
-
-    /// <summary>
-    /// GET /api/arabic-letters/forms
-    /// Returns the four positional forms (isolated, initial, medial, final)
-    /// for every letter — lightweight, no makhraj/sifaat data.
-    /// </summary>
     [HttpGet("forms")]
     public async Task<IReadOnlyList<LetterFormsDto>> GetAllForms(CancellationToken ct)
         => await _repo.GetAllFormsAsync(ct);
 
-    /// <summary>
-    /// GET /api/arabic-letters/{id}/forms
-    /// Returns the four positional forms for a single letter.
-    /// </summary>
-    [HttpGet("{id:int}/forms")]
-    public async Task<IActionResult> GetFormsById(int id, CancellationToken ct)
+    [HttpGet("{id:guid}/forms")]
+    public async Task<IActionResult> GetFormsById(Guid id, CancellationToken ct)
     {
         var forms = await _repo.GetFormsByIdAsync(id, ct);
         if (forms is null) return NotFound();
         return Ok(forms);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    // ── Drawing-check endpoint ────────────────────────────────────────────────
-
-    /// <summary>
-    /// POST /api/arabic-letters/{id}/check-drawing
-    /// Body: { "imageBase64": "&lt;png base64&gt;" }
-    /// Uses GPT-4o Vision to evaluate a user's hand-drawn letter.
-    /// </summary>
-    [HttpPost("{id:int}/check-drawing")]
+    [HttpPost("{id:guid}/check-drawing")]
     public async Task<IActionResult> CheckDrawing(
-        int id,
+        Guid id,
         [FromBody] DrawingCheckRequestDto body,
         CancellationToken ct)
     {
@@ -125,17 +95,10 @@ public class ArabicLetterController : ControllerBase
         return Ok(result);
     }
 
-    // ── Pronunciation-check endpoint (replaces unreliable WebSocket path) ────
-
-    /// <summary>
-    /// POST /api/arabic-letters/{id}/check-pronunciation
-    /// Body: multipart/form-data with field "audio" (ogg / webm / wav / mp4).
-    /// Uses Azure Speech one-shot recognition + Azure AI evaluation.
-    /// </summary>
-    [HttpPost("{id:int}/check-pronunciation")]
-    [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB max
+    [HttpPost("{id:guid}/check-pronunciation")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<IActionResult> CheckPronunciation(
-        int            id,
+        Guid           id,
         IFormFile      audio,
         CancellationToken ct)
     {
@@ -143,7 +106,7 @@ public class ArabicLetterController : ControllerBase
             return BadRequest("An audio file field named 'audio' is required.");
 
         ArabicLetterDto? letterDto = null;
-        try 
+        try
         {
             var letter = await _repo.GetByIdAsync(id, ct);
             if (letter != null) letterDto = ToDto(letter);
@@ -153,8 +116,12 @@ public class ArabicLetterController : ControllerBase
             _logger.LogWarning(ex, "Database failed while fetching letter {Id} for pronunciation check. Using mock fallback.", id);
         }
 
-        // Fallback mock letter if DB is down or letter not found, to allow AI testing
-        letterDto ??= new ArabicLetterDto(id, id, "ا", "Alif", "أَلِف", "আলিফ", "ā / ʾ", "Throat", "Makhraj desc", "মাখরাজ বর্ণনা", new[]{"Light"}, "أَحَد", "One", "এক", "ا", "ا", "ـا", "ـا", false, "");
+        letterDto ??= new ArabicLetterDto(
+            Guid.Parse("00000000-0000-0000-0000-000000000001"), 1,
+            "ا", "Alif", "أَلِف", "আলিফ", "ā / ʾ",
+            "Throat", "Makhraj desc", "মাখরাজ বর্ণনা", ["Light"],
+            "أَحَد", "One", "এক", "ا", "ا", "ـا", "ـا", false, "",
+            Harakat: [], Tanween: []);
 
         using var ms = new MemoryStream();
         await audio.CopyToAsync(ms, ct);
@@ -164,10 +131,8 @@ public class ArabicLetterController : ControllerBase
         return Ok(result);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-
-    [HttpGet("{id:int}/audio")]
-    public async Task<IActionResult> GetAudio(int id, CancellationToken ct)
+    [HttpGet("{id:guid}/audio")]
+    public async Task<IActionResult> GetAudio(Guid id, CancellationToken ct)
     {
         var letter = await _repo.GetByIdAsync(id, ct);
         if (letter is null) return NotFound();
@@ -176,26 +141,72 @@ public class ArabicLetterController : ControllerBase
         return File(audioBytes, "audio/mpeg");
     }
 
+    [HttpPost("{id:guid}/tajweed-progress")]
+    public async Task<IActionResult> SaveTajweedProgress(
+        Guid id,
+        [FromBody] SaveTajweedProgressRequest body,
+        CancellationToken ct)
+    {
+        var validModes = new[] { "harakat", "tanween", "sukoon_shaddah", "word_building" };
+        if (!validModes.Contains(body.Mode))
+            return BadRequest($"Mode must be one of: {string.Join(", ", validModes)}");
+
+        var letter = await _repo.GetByIdAsync(id, ct);
+        if (letter is null) return NotFound();
+
+        await _tajweedProgress.SaveAsync(new backend.Domain.Entities.TajweedPracticeRecord
+        {
+            LetterId      = id,
+            Mode          = body.Mode,
+            Score         = body.Score,
+            AccuracyScore = body.AccuracyScore,
+            IsCorrect     = body.IsCorrect,
+            PracticedAt   = DateTime.UtcNow,
+        }, ct);
+
+        return Ok();
+    }
+
+    [HttpGet("tajweed-progress")]
+    public async Task<IReadOnlyList<TajweedLetterProgress>> GetTajweedProgress(CancellationToken ct)
+        => await _tajweedProgress.GetTableAsync(ct);
+
     private ArabicLetterDto ToDto(backend.Domain.Entities.ArabicLetter l) => new(
         l.Id,
-        l.Order,
-        l.Letter,
-        l.NameEnglish,
+        l.SequenceOrder,
+        l.Character,
+        l.Name.En,
         l.NameArabic,
-        l.NameBangla,
-        l.Transliteration,
+        l.Name.Bn,
+        l.Transliteration.En,
         l.MakhrajType,
-        l.MakhrajDescription,
-        l.MakhrajDescriptionBn,
+        l.MakhrajDescription.En,
+        l.MakhrajDescription.Bn,
         l.Sifaat.Split(',', StringSplitOptions.RemoveEmptyEntries),
         l.ExampleWordArabic,
-        l.ExampleWord,
-        l.ExampleWordBn,
+        l.ExampleWordMeaning.En,
+        l.ExampleWordMeaning.Bn,
         l.IsolatedForm,
         l.InitialForm,
         l.MedialForm,
         l.FinalForm,
         l.IsConnector,
-        AudioUrl: $"/api/arabic-letters/{l.Id}/audio"
+        AudioUrl: $"/api/arabic-letters/{l.Id}/audio",
+        Harakat: l.HarakatItems
+                  .Where(i => i.Category.Type == "Harakat")
+                  .OrderBy(i => i.Category.DisplayOrder)
+                  .Select(i => new HarakatItemDto(
+                      i.CategoryId, i.Category.Name, i.Category.ArabicName,
+                      i.Category.BanglaName, i.Category.Symbol,
+                      i.Sound, i.ExampleWord))
+                  .ToList(),
+        Tanween: l.HarakatItems
+                  .Where(i => i.Category.Type == "Tanween")
+                  .OrderBy(i => i.Category.DisplayOrder)
+                  .Select(i => new HarakatItemDto(
+                      i.CategoryId, i.Category.Name, i.Category.ArabicName,
+                      i.Category.BanglaName, i.Category.Symbol,
+                      i.Sound, i.ExampleWord))
+                  .ToList()
     );
 }

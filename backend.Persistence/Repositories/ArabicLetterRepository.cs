@@ -11,8 +11,13 @@ public class ArabicLetterRepository : IArabicLetterRepository
 
     public ArabicLetterRepository(AppDbContext db) => _db = db;
 
+    private IQueryable<ArabicLetter> WithHarakat()
+        => _db.ArabicLetters
+              .Include(l => l.HarakatItems)
+                  .ThenInclude(i => i.Category);
+
     public async Task<IReadOnlyList<ArabicLetter>> GetAllAsync(CancellationToken ct = default)
-        => await _db.ArabicLetters.OrderBy(l => l.Order).ToListAsync(ct);
+        => await WithHarakat().OrderBy(l => l.SequenceOrder).ToListAsync(ct);
 
     public async Task<PagedResult<ArabicLetter>> GetPagedAsync(
         int page, int pageSize, CancellationToken ct = default)
@@ -21,8 +26,8 @@ public class ArabicLetterRepository : IArabicLetterRepository
         pageSize = Math.Clamp(pageSize, 1, 50);
 
         var total = await _db.ArabicLetters.CountAsync(ct);
-        var items = await _db.ArabicLetters
-            .OrderBy(l => l.Order)
+        var items = await WithHarakat()
+            .OrderBy(l => l.SequenceOrder)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -30,17 +35,17 @@ public class ArabicLetterRepository : IArabicLetterRepository
         return new PagedResult<ArabicLetter>(items, page, pageSize, total);
     }
 
-    public async Task<ArabicLetter?> GetByIdAsync(int id, CancellationToken ct = default)
-        => await _db.ArabicLetters.FirstOrDefaultAsync(l => l.Id == id, ct);
+    public async Task<ArabicLetter?> GetByIdAsync(Guid id, CancellationToken ct = default)
+        => await WithHarakat().FirstOrDefaultAsync(l => l.Id == id, ct);
 
     public async Task<IReadOnlyList<LetterFormsDto>> GetAllFormsAsync(CancellationToken ct = default)
         => await _db.ArabicLetters
-            .OrderBy(l => l.Order)
+            .OrderBy(l => l.SequenceOrder)
             .Select(l => new LetterFormsDto(
                 l.Id,
-                l.Order,
-                l.Letter,
-                l.NameEnglish,
+                l.SequenceOrder,
+                l.Character,
+                l.Name.En,
                 l.IsolatedForm,
                 l.InitialForm,
                 l.MedialForm,
@@ -48,14 +53,14 @@ public class ArabicLetterRepository : IArabicLetterRepository
                 l.IsConnector))
             .ToListAsync(ct);
 
-    public async Task<LetterFormsDto?> GetFormsByIdAsync(int id, CancellationToken ct = default)
+    public async Task<LetterFormsDto?> GetFormsByIdAsync(Guid id, CancellationToken ct = default)
         => await _db.ArabicLetters
             .Where(l => l.Id == id)
             .Select(l => new LetterFormsDto(
                 l.Id,
-                l.Order,
-                l.Letter,
-                l.NameEnglish,
+                l.SequenceOrder,
+                l.Character,
+                l.Name.En,
                 l.IsolatedForm,
                 l.InitialForm,
                 l.MedialForm,

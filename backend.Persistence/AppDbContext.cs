@@ -17,7 +17,19 @@ public class AppDbContext : DbContext
     public DbSet<WordPronunciationResult> WordPronunciationResults => Set<WordPronunciationResult>();
     public DbSet<PhonemeResult> PhonemeResults => Set<PhonemeResult>();
     public DbSet<TajweedRule> TajweedRules => Set<TajweedRule>();
-    public DbSet<ArabicLetter> ArabicLetters => Set<ArabicLetter>();
+    public DbSet<ArabicLetter>      ArabicLetters      => Set<ArabicLetter>();
+    public DbSet<LessonCategory>    LessonCategories   => Set<LessonCategory>();
+    public DbSet<LessonItem>        LessonItems        => Set<LessonItem>();
+    public DbSet<HarakatCategory>   HarakatCategories  => Set<HarakatCategory>();
+    public DbSet<LetterHarakatItem> LetterHarakatItems => Set<LetterHarakatItem>();
+    public DbSet<TajweedPracticeRecord> TajweedPracticeRecords => Set<TajweedPracticeRecord>();
+    public DbSet<User>           Users           => Set<User>();
+    public DbSet<UserProfile>    UserProfiles    => Set<UserProfile>();
+    public DbSet<UserXpLog>      UserXpLogs      => Set<UserXpLog>();
+    public DbSet<DiacriticSign>  DiacriticSigns  => Set<DiacriticSign>();
+    public DbSet<SyllableSound>  SyllableSounds  => Set<SyllableSound>();
+    public DbSet<Lesson>         Lessons         => Set<Lesson>();
+    public DbSet<PracticeItem>   PracticeItems   => Set<PracticeItem>();
 
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 

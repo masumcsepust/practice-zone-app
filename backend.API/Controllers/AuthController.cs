@@ -1,0 +1,92 @@
+using backend.Application.DTOs;
+using backend.Application.Interfaces;
+using backend.Domain.Entities;
+using backend.Infrastructure.Auth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace backend.API.Controllers;
+
+[ApiController]
+[Route("api/auth")]
+public class AuthController(
+    IUserRepository userRepo,
+    IJwtService     jwtService) : ControllerBase
+{
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] RegisterRequest req, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
+            return BadRequest(new { message = "Email and password are required." });
+
+        var existing = await userRepo.GetByEmailAsync(req.Email, ct);
+        if (existing is not null)
+            return Conflict(new { message = "Email already registered." });
+
+        var user = new User
+        {
+            Id           = Guid.NewGuid(),
+            Email        = req.Email.ToLowerInvariant(),
+            PasswordHash = PasswordHasher.Hash(req.Password),
+            Role         = "User",
+            CreatedAt    = DateTime.UtcNow,
+            UpdatedAt    = DateTime.UtcNow,
+            Profile      = new UserProfile
+            {
+                Id          = Guid.NewGuid(),
+                DisplayName = req.DisplayName,
+                CreatedAt   = DateTime.UtcNow,
+                UpdatedAt   = DateTime.UtcNow,
+            }
+        };
+
+        await userRepo.AddAsync(user, ct);
+
+        var token = jwtService.GenerateToken(user);
+        return Ok(BuildResponse(token, user));
+    }
+
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest req, CancellationToken ct)
+    {
+        var user = await userRepo.GetByEmailAsync(req.Email, ct);
+        if (user is null || !PasswordHasher.Verify(req.Password, user.PasswordHash))
+            return Unauthorized(new { message = "Invalid email or password." });
+
+        var token = jwtService.GenerateToken(user);
+        return Ok(BuildResponse(token, user));
+    }
+
+    [HttpGet("me")]
+    [Authorize]
+    public async Task<IActionResult> Me(CancellationToken ct)
+    {
+        var idClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(idClaim, out var userId))
+            return Unauthorized();
+
+        var user = await userRepo.GetByIdAsync(userId, ct);
+        if (user is null) return NotFound();
+
+        return Ok(new
+        {
+            user.Id,
+            user.Email,
+            user.Role,
+            DisplayName   = user.Profile?.DisplayName ?? "",
+            AvatarUrl     = user.Profile?.AvatarUrl   ?? "",
+            TotalXp       = user.Profile?.TotalXp       ?? 0,
+            CurrentStreak = user.Profile?.CurrentStreak ?? 0,
+        });
+    }
+
+    private static AuthResponse BuildResponse(string token, User user) => new(
+        Token:         token,
+        UserId:        user.Id,
+        DisplayName:   user.Profile?.DisplayName ?? "",
+        Email:         user.Email,
+        Role:          user.Role,
+        TotalXp:       user.Profile?.TotalXp       ?? 0,
+        CurrentStreak: user.Profile?.CurrentStreak ?? 0
+    );
+}

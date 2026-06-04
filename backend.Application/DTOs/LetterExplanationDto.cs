@@ -5,7 +5,7 @@ namespace backend.Application.DTOs;
 /// Returned by GET /api/arabic-letters/{id}/explanation.
 /// </summary>
 public record LetterExplanationDto(
-    int    Id,
+    Guid   Id,
     string Letter,
     string NameEnglish,
 

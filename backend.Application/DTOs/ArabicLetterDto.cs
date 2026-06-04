@@ -1,7 +1,7 @@
 namespace backend.Application.DTOs;
 
 public record ArabicLetterDto(
-    int      Id,
+    Guid     Id,
     int      Order,
     string   Letter,
     string   NameEnglish,
@@ -20,5 +20,17 @@ public record ArabicLetterDto(
     string   MedialForm,
     string   FinalForm,
     bool     IsConnector,
-    string   AudioUrl
+    string   AudioUrl,
+    IReadOnlyList<HarakatItemDto> Harakat,
+    IReadOnlyList<HarakatItemDto> Tanween
+);
+
+public record HarakatItemDto(
+    int    CategoryId,
+    string CategoryName,
+    string ArabicName,
+    string BanglaName,
+    string Symbol,
+    string Sound,
+    string ExampleWord
 );

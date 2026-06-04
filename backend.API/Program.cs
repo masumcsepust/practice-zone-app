@@ -1,8 +1,11 @@
+using System.Text;
 using backend.API.Middleware;
 using backend.API.WebSockets;
 using backend.Application;
 using backend.Infrastructure;
 using backend.Persistence;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +21,29 @@ builder.Services.AddCors(options =>
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 builder.Services.AddControllers();
+builder.Services.AddHttpClient("alquran", c =>
+{
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer           = true,
+            ValidateAudience         = true,
+            ValidateLifetime         = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
+            ValidAudience            = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey         = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -38,11 +64,15 @@ builder.Services
 // Singleton: stateless handler, dependencies are singletons or resolved via IServiceScopeFactory
 builder.Services.AddSingleton<QuranRecitationWebSocketHandler>();
 builder.Services.AddSingleton<LetterPracticeWebSocketHandler>();
+builder.Services.AddSingleton<SurahRecitationWebSocketHandler>();
+builder.Services.AddSingleton<PageRecitationWebSocketHandler>();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseCors("Angular");
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Must be registered before any middleware that needs WebSocket support
 app.UseWebSockets(new WebSocketOptions
@@ -62,6 +92,20 @@ app.Map("/ws/letter", async context =>
 {
     var handler = context.RequestServices
         .GetRequiredService<LetterPracticeWebSocketHandler>();
+    await handler.HandleAsync(context);
+});
+
+app.Map("/ws/surah-recitation", async context =>
+{
+    var handler = context.RequestServices
+        .GetRequiredService<SurahRecitationWebSocketHandler>();
+    await handler.HandleAsync(context);
+});
+
+app.Map("/ws/page-recitation", async context =>
+{
+    var handler = context.RequestServices
+        .GetRequiredService<PageRecitationWebSocketHandler>();
     await handler.HandleAsync(context);
 });
 

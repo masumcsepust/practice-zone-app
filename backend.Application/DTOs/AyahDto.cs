@@ -7,4 +7,10 @@ public record AyahDto(
     string ArabicText,
     string EnglishTranslation,
     string BanglaTranslation,
-    string Transliteration);
+    string Transliteration,
+    int?   Page,
+    int?   Juz,
+    int?   Manzil,
+    int?   Ruku,
+    int?   HizbQuarter,
+    bool?  Sajda);

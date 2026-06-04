@@ -1,19 +1,33 @@
 package com.example.quran_app.data.remote
 
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    // 10.0.2.2 is emulator-only; use localhost with `adb reverse tcp:5092 tcp:5092` for physical device
     private const val BASE_URL = "http://localhost:5092/"
+
+    @Volatile private var authToken: String? = null
+
+    fun setToken(token: String?) { authToken = token }
 
     private val logging = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
     }
 
+    private val authInterceptor = Interceptor { chain ->
+        val request = authToken?.let { token ->
+            chain.request().newBuilder()
+                .header("Authorization", "Bearer $token")
+                .build()
+        } ?: chain.request()
+        chain.proceed(request)
+    }
+
     private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(authInterceptor)
         .addInterceptor(logging)
         .build()
 
