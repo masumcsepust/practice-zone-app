@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddScoped<ITajweedProgressRepository, TajweedProgressRepository>();
         services.AddScoped<ILessonPracticeRepository, LessonPracticeRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ISyllableSoundRepository, SyllableSoundRepository>();
         services.AddScoped<IRecitationSessionRepository, RecitationSessionRepository>();
         services.AddScoped<StreamingSessionRepository>();
         services.AddScoped<PronunciationRepository>();

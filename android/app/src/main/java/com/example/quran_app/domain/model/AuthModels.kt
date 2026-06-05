@@ -24,11 +24,17 @@ data class AuthResponse(
 )
 
 data class UserInfo(
-    @SerializedName("id")            val id:            String,
-    @SerializedName("email")         val email:         String,
-    @SerializedName("role")          val role:          String,
-    @SerializedName("displayName")   val displayName:   String,
-    @SerializedName("avatarUrl")     val avatarUrl:     String,
-    @SerializedName("totalXp")       val totalXp:       Int,
-    @SerializedName("currentStreak") val currentStreak: Int
+    @SerializedName("id")                val id:                String,
+    @SerializedName("email")             val email:             String,
+    @SerializedName("role")              val role:              String,
+    @SerializedName("displayName")       val displayName:       String,
+    @SerializedName("avatarUrl")         val avatarUrl:         String  = "",
+    @SerializedName("username")          val username:          String  = "",
+    @SerializedName("totalXp")           val totalXp:           Int     = 0,
+    @SerializedName("currentStreak")     val currentStreak:     Int     = 0,
+    @SerializedName("totalLessons")      val totalLessons:      Int     = 0,
+    @SerializedName("correctAnswerRate") val correctAnswerRate: Float   = 0f,
+    @SerializedName("level")             val level:             Int     = 1,
+    @SerializedName("nextLevelXp")       val nextLevelXp:       Int     = 400,
+    @SerializedName("memberSince")       val memberSince:       String  = "",
 )

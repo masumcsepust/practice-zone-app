@@ -2,8 +2,8 @@ package com.example.quran_app.data.remote
 
 import com.example.quran_app.domain.model.ArabicLetter
 import com.example.quran_app.domain.model.AuthResponse
-import com.example.quran_app.domain.model.PracticeListResponse
-import com.example.quran_app.domain.model.PracticeSessionResponse
+import com.example.quran_app.domain.model.LeaderboardResponse
+import com.example.quran_app.domain.model.PracticeStepResponse
 import com.example.quran_app.domain.model.LoginRequest
 import com.example.quran_app.domain.model.RegisterRequest
 import com.example.quran_app.domain.model.TanweenLessonResponse
@@ -12,17 +12,13 @@ import com.example.quran_app.domain.model.DrawingCheckRequest
 import com.example.quran_app.domain.model.DrawingResult
 import com.example.quran_app.domain.model.LetterForms
 import com.example.quran_app.domain.model.PagedResponse
-import com.example.quran_app.domain.model.PronunciationResult
 import com.example.quran_app.domain.model.UserInfo
 import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
 import com.example.quran_app.domain.model.TajweedLetterProgress
-import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Multipart
 import retrofit2.http.POST
-import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -45,9 +41,6 @@ interface QuranApiService {
         @Query("pageSize") pageSize: Int = 10
     ): PagedResponse<ArabicLetter>
 
-    @GET("api/arabic-letters/{id}")
-    suspend fun getArabicLetter(@Path("id") id: String): ArabicLetter
-
     @GET("api/arabic-letters/{id}/forms")
     suspend fun getLetterForms(@Path("id") id: String): LetterForms
 
@@ -56,14 +49,6 @@ interface QuranApiService {
         @Path("id") id: String,
         @Body body: DrawingCheckRequest
     ): DrawingResult
-
-    /** One-shot HTTP pronunciation check — replaces broken WebSocket path. */
-    @Multipart
-    @POST("api/arabic-letters/{id}/check-pronunciation")
-    suspend fun checkPronunciation(
-        @Path("id") id: String,
-        @Part audio: MultipartBody.Part
-    ): PronunciationResult
 
     @GET("api/quran/surahs")
     suspend fun getSurahs(): List<Surah>
@@ -87,9 +72,13 @@ interface QuranApiService {
     suspend fun getTanweenLesson(@Path("letterOrder") letterOrder: Int): TanweenLessonResponse
 
     // ── Practice lessons ──────────────────────────────────────────────────────
-    @GET("api/practice/lessons")
-    suspend fun getPracticeLessons(): PracticeListResponse
+    @GET("api/practice/lessons/{lessonNum}/step/{stepNum}")
+    suspend fun getPracticeStep(
+        @Path("lessonNum") lessonNum: Int,
+        @Path("stepNum")   stepNum:   Int,
+    ): PracticeStepResponse
 
-    @GET("api/practice/lessons/{id}")
-    suspend fun getPracticeLesson(@Path("id") id: String): PracticeSessionResponse
+    // ── Leaderboard ───────────────────────────────────────────────────────────
+    @GET("api/leaderboard")
+    suspend fun getLeaderboard(@Query("period") period: String = "all"): LeaderboardResponse
 }

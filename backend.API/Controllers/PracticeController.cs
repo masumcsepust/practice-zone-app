@@ -22,4 +22,13 @@ public class PracticeController(ILessonPracticeRepository repo) : ControllerBase
         if (data is null) return NotFound();
         return Ok(new PracticeSessionResponse("success", data));
     }
+
+    // GET /api/practice/lessons/{lessonNum}/step/{stepNum}
+    [HttpGet("{lessonNum:int}/step/{stepNum:int}")]
+    public async Task<IActionResult> GetStep(int lessonNum, int stepNum, CancellationToken ct)
+    {
+        var step = await repo.GetStepAsync(lessonNum, stepNum, ct);
+        if (step is null) return NotFound();
+        return Ok(step);
+    }
 }

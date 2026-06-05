@@ -2,13 +2,14 @@ import { Component, signal } from '@angular/core';
 import { PronunciationAssessmentComponent } from './pronunciation/pronunciation-assessment.component';
 import { TajweedAssessmentComponent } from './tajweed/tajweed-assessment.component';
 import { LetterPracticeComponent } from './arabic-letters/letter-practice.component';
+import { SyllableSoundComponent } from './syllable-sound/syllable-sound.component';
 
-type Mode = 'pronunciation' | 'tajweed' | 'letters';
+type Mode = 'pronunciation' | 'tajweed' | 'letters' | 'syllables';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [PronunciationAssessmentComponent, TajweedAssessmentComponent, LetterPracticeComponent],
+  imports: [PronunciationAssessmentComponent, TajweedAssessmentComponent, LetterPracticeComponent, SyllableSoundComponent],
   template: `
     <nav class="app-nav">
       <button [class.active]="mode() === 'pronunciation'" (click)="mode.set('pronunciation')">
@@ -20,6 +21,9 @@ type Mode = 'pronunciation' | 'tajweed' | 'letters';
       <button [class.active]="mode() === 'letters'" (click)="mode.set('letters')">
         Letters
       </button>
+      <button [class.active]="mode() === 'syllables'" (click)="mode.set('syllables')">
+        Syllables
+      </button>
     </nav>
 
     <div class="app-body">
@@ -27,6 +31,8 @@ type Mode = 'pronunciation' | 'tajweed' | 'letters';
         <app-pronunciation-assessment />
       } @else if (mode() === 'tajweed') {
         <app-tajweed-assessment />
+      } @else if (mode() === 'syllables') {
+        <app-syllable-sound />
       } @else {
         <app-letter-practice />
       }

@@ -24,6 +24,7 @@ import com.example.quran_app.ui.theme.QuranappTheme
 import com.example.quran_app.ui.viewmodel.ArabicLettersViewModel
 import com.example.quran_app.ui.viewmodel.AuthViewModel
 import com.example.quran_app.data.remote.RetrofitClient
+import com.example.quran_app.ui.viewmodel.LeaderboardViewModel
 import com.example.quran_app.ui.viewmodel.PracticeLessonViewModel
 import com.example.quran_app.ui.viewmodel.ProfileViewModel
 import com.example.quran_app.ui.viewmodel.TanweenLessonViewModel
@@ -53,6 +54,8 @@ class MainActivity : ComponentActivity() {
                             key = "profile", factory = profileVmFactory())
                         val practiceVm: PracticeLessonViewModel = viewModel(
                             key = "practice", factory = practiceVmFactory())
+                        val leaderboardVm: LeaderboardViewModel = viewModel(
+                            key = "leaderboard", factory = leaderboardVmFactory())
 
                         // Reload profile when returning from login
                         val refreshProfile = it.savedStateHandle.get<Boolean>("refresh_profile")
@@ -67,6 +70,7 @@ class MainActivity : ComponentActivity() {
                             lessonViewModel         = lessonVm,
                             practiceLessonViewModel = practiceVm,
                             profileViewModel        = profileVm,
+                            leaderboardViewModel    = leaderboardVm,
                             onGoLogin               = { navController.navigate(Screen.Login.route) },
                             onGoRegister            = { navController.navigate(Screen.Register.route) },
                         )
@@ -141,7 +145,8 @@ class MainActivity : ComponentActivity() {
         override fun <T : ViewModel> create(c: Class<T>): T =
             PracticeLessonViewModel(
                 appContainer.quranRepository,
-                appContainer.audioPlayer
+                appContainer.audioPlayer,
+                appContainer.letterRecorder,
             ) as T
     }
 
@@ -181,5 +186,11 @@ class MainActivity : ComponentActivity() {
                 appContainer.letterRecorder,
                 appContainer.wsClient
             ) as T
+    }
+
+    private fun leaderboardVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            LeaderboardViewModel(RetrofitClient.apiService) as T
     }
 }

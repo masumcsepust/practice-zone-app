@@ -8,15 +8,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        services.AddScoped<IArabicTextNormalizer, ArabicTextNormalizer>();
-        services.AddScoped<IAyahComparisonService, AyahComparisonService>();
-        services.AddScoped<IRecitationService, RecitationService>();
-
         // Singleton: holds live WebSocket connections across the app lifetime
         services.AddSingleton<IWebSocketSessionManager, WebSocketSessionManager>();
-
-        // Phase 3: stateless JSON parser — safe as singleton
-        services.AddSingleton<IPhonemeAnalysisService, PhonemeAnalysisService>();
 
         return services;
     }

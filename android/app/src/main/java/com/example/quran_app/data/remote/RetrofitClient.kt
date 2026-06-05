@@ -7,7 +7,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private const val BASE_URL = "http://localhost:5092/"
+    private const val BASE_URL = "http://192.168.0.111:5092/"
 
     @Volatile private var authToken: String? = null
 

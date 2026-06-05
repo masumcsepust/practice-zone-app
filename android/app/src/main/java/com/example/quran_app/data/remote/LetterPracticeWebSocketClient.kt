@@ -32,7 +32,7 @@ class LetterPracticeWebSocketClient {
         onError:   (String) -> Unit
     ) {
         val request = Request.Builder()
-            .url("ws://localhost:5092/ws/letter?letterId=$letterId")
+            .url("ws://192.168.0.111:5092/ws/letter?letterId=$letterId")
             .build()
 
         activeSocket = client.newWebSocket(request, object : WebSocketListener() {

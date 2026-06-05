@@ -62,10 +62,7 @@ builder.Services
     .AddPersistence(builder.Configuration);
 
 // Singleton: stateless handler, dependencies are singletons or resolved via IServiceScopeFactory
-builder.Services.AddSingleton<QuranRecitationWebSocketHandler>();
 builder.Services.AddSingleton<LetterPracticeWebSocketHandler>();
-builder.Services.AddSingleton<SurahRecitationWebSocketHandler>();
-builder.Services.AddSingleton<PageRecitationWebSocketHandler>();
 
 var app = builder.Build();
 
@@ -80,32 +77,10 @@ app.UseWebSockets(new WebSocketOptions
     KeepAliveInterval = TimeSpan.FromSeconds(30)
 });
 
-// Phase 2: real-time streaming endpoint
-app.Map("/ws/recitation", async context =>
-{
-    var handler = context.RequestServices
-        .GetRequiredService<QuranRecitationWebSocketHandler>();
-    await handler.HandleAsync(context);
-});
-
 app.Map("/ws/letter", async context =>
 {
     var handler = context.RequestServices
         .GetRequiredService<LetterPracticeWebSocketHandler>();
-    await handler.HandleAsync(context);
-});
-
-app.Map("/ws/surah-recitation", async context =>
-{
-    var handler = context.RequestServices
-        .GetRequiredService<SurahRecitationWebSocketHandler>();
-    await handler.HandleAsync(context);
-});
-
-app.Map("/ws/page-recitation", async context =>
-{
-    var handler = context.RequestServices
-        .GetRequiredService<PageRecitationWebSocketHandler>();
     await handler.HandleAsync(context);
 });
 

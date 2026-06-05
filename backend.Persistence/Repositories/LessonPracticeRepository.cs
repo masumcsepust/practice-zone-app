@@ -26,14 +26,19 @@ public class LessonPracticeRepository(AppDbContext db) : ILessonPracticeReposito
 
     private IQueryable<Lesson> QueryWithIncludes()
         => db.Lessons
+             // TargetSyllable is required — always load Letter and Sign
              .Include(l => l.PracticeItems)
                  .ThenInclude(p => p.TargetSyllable).ThenInclude(s => s.Letter)
              .Include(l => l.PracticeItems)
                  .ThenInclude(p => p.TargetSyllable).ThenInclude(s => s.Sign)
+             // CompareWithSyllable is optional — EF generates LEFT JOINs;
+             // Letter and Sign are only populated when CompareWithSyllableId != null
              .Include(l => l.PracticeItems)
-                 .ThenInclude(p => p.CompareWithSyllable!).ThenInclude(s => s.Letter)
+                 .ThenInclude(p => p.CompareWithSyllable)
+                 .ThenInclude(s => s!.Letter)
              .Include(l => l.PracticeItems)
-                 .ThenInclude(p => p.CompareWithSyllable!).ThenInclude(s => s.Sign);
+                 .ThenInclude(p => p.CompareWithSyllable)
+                 .ThenInclude(s => s!.Sign);
 
     private static PracticeSessionData ToDto(Lesson l) => new(
         LessonId:      l.Id,
@@ -50,6 +55,60 @@ public class LessonPracticeRepository(AppDbContext db) : ILessonPracticeReposito
             ))
             .ToList()
             .AsReadOnly()
+    );
+
+    public async Task<PracticeStepDto?> GetStepAsync(int lessonNum, int stepNum, CancellationToken ct = default)
+    {
+        var totalLessons = await db.Lessons.CountAsync(ct);
+
+        var lesson = await QueryWithIncludes()
+            .Where(l => l.SequenceOrder == lessonNum)
+            .FirstOrDefaultAsync(ct);
+
+        if (lesson is null) return null;
+
+        var items      = lesson.PracticeItems.OrderBy(p => p.Id).ToList();
+        var totalSteps = items.Count;
+
+        if (stepNum < 1 || stepNum > totalSteps) return null;
+
+        var item = items[stepNum - 1];
+
+        // Global progress: (completed items across all previous lessons + current step - 1) / total items
+        var totalItems      = await db.PracticeItems.CountAsync(ct);
+        var completedBefore = await db.Lessons
+            .Where(l => l.SequenceOrder < lessonNum)
+            .Select(l => l.PracticeItems.Count)
+            .SumAsync(ct);
+        var progress = totalItems == 0 ? 0
+            : (int)Math.Round((completedBefore + stepNum - 1) * 100.0 / totalItems);
+
+        var title = lesson.Title.Bn.Length > 0 ? lesson.Title.Bn : lesson.Title.En;
+        var tip   = item.SuccessTip.Bn.Length > 0 ? item.SuccessTip.Bn : item.SuccessTip.En;
+
+        return new PracticeStepDto(
+            Id:           stepNum,
+            Title:        title,
+            LessonNum:    lessonNum,
+            Progress:     progress,
+            Tips:         tip,
+            Left:         ToStepSyllable(item.TargetSyllable,      item.Instruction.Bn.Length > 0 ? item.Instruction.Bn : item.Instruction.En),
+            Right:        item.CompareWithSyllable is null ? null : ToStepSyllable(item.CompareWithSyllable, "তুলনা করতে রেকর্ড করুন"),
+            RememberText: tip,
+            TotalLessons: totalLessons,
+            TotalSteps:   totalSteps
+        );
+    }
+
+    private static StepSyllableDto ToStepSyllable(SyllableSound s, string prompt) => new(
+        Arabic:        s.CombinedCharacter,
+        Translit:      s.Transliteration.En,
+        Bengali:       s.Transliteration.Bn,
+        Prompt:        prompt,
+        LetterBengali: s.Letter.Name.Bn.Length > 0 ? s.Letter.Name.Bn : s.Letter.Name.En,
+        SignName:      s.Sign.Name.Bn.Length   > 0 ? s.Sign.Name.Bn   : s.Sign.Name.En,
+        SignGroup:     s.Sign.SignGroup,
+        AudioUrl:      s.AudioUrl
     );
 
     private static SyllableDto ToSyllableDto(SyllableSound s) => new(

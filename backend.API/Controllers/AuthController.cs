@@ -68,15 +68,30 @@ public class AuthController(
         var user = await userRepo.GetByIdAsync(userId, ct);
         if (user is null) return NotFound();
 
+        var xp            = user.Profile?.TotalXp ?? 0;
+        var level         = Math.Max(1, xp / 400 + 1);
+        var nextLevelXp   = level * 400;
+        var displayName   = user.Profile?.DisplayName ?? "";
+        var rawUsername   = user.Profile?.Username;
+        var username      = string.IsNullOrWhiteSpace(rawUsername)
+            ? "@" + displayName.ToLower().Replace(" ", "_")
+            : rawUsername;
+
         return Ok(new
         {
             user.Id,
             user.Email,
             user.Role,
-            DisplayName   = user.Profile?.DisplayName ?? "",
-            AvatarUrl     = user.Profile?.AvatarUrl   ?? "",
-            TotalXp       = user.Profile?.TotalXp       ?? 0,
-            CurrentStreak = user.Profile?.CurrentStreak ?? 0,
+            DisplayName       = displayName,
+            AvatarUrl         = user.Profile?.AvatarUrl          ?? "",
+            Username          = username,
+            TotalXp           = xp,
+            CurrentStreak     = user.Profile?.CurrentStreak      ?? 0,
+            TotalLessons      = user.Profile?.TotalLessons       ?? 0,
+            CorrectAnswerRate = user.Profile?.CorrectAnswerRate   ?? 0.0,
+            Level             = level,
+            NextLevelXp       = nextLevelXp,
+            MemberSince       = user.CreatedAt.ToString("dd MMMM, yyyy"),
         });
     }
 

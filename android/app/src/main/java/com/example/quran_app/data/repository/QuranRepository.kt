@@ -7,16 +7,12 @@ import com.example.quran_app.domain.model.DrawingCheckRequest
 import com.example.quran_app.domain.model.DrawingResult
 import com.example.quran_app.domain.model.LetterForms
 import com.example.quran_app.domain.model.PagedResponse
-import com.example.quran_app.domain.model.PronunciationResult
 import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
 import com.example.quran_app.domain.model.TajweedLetterProgress
-import com.example.quran_app.domain.model.PracticeSessionData
+import com.example.quran_app.data.local.offlineStep
+import com.example.quran_app.domain.model.PracticeStepResponse
 import com.example.quran_app.domain.model.TanweenLessonData
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
 
 class QuranRepository(private val apiService: QuranApiService) {
     suspend fun getArabicLetters(
@@ -33,29 +29,6 @@ class QuranRepository(private val apiService: QuranApiService) {
     suspend fun checkDrawing(id: String, imageBase64: String): Result<DrawingResult> = runCatching {
         apiService.checkDrawing(id, DrawingCheckRequest(imageBase64))
     }
-
-    /**
-     * Uploads the recorded audio file to POST /api/arabic-letters/{id}/check-pronunciation
-     * and returns an AI-evaluated [PronunciationResult].
-     *
-     * Infers MIME type from file extension:
-     *  .ogg → audio/ogg   (Android 10+ OGG/OPUS)
-     *  .mp4 → audio/mp4   (Android < 10 fallback)
-     *  .wav → audio/wav
-     */
-    suspend fun checkPronunciation(id: String, audioFile: File): Result<PronunciationResult> =
-        runCatching {
-            val mime = when (audioFile.extension.lowercase()) {
-                "ogg"  -> "audio/ogg"
-                "webm" -> "audio/webm"
-                "mp4"  -> "audio/mp4"
-                "wav"  -> "audio/wav"
-                else   -> "audio/ogg"
-            }
-            val requestBody = audioFile.asRequestBody(mime.toMediaTypeOrNull())
-            val part        = MultipartBody.Part.createFormData("audio", audioFile.name, requestBody)
-            apiService.checkPronunciation(id, part)
-        }
 
     suspend fun getSurahs(): Result<List<Surah>> = runCatching {
         apiService.getSurahs()
@@ -90,11 +63,10 @@ class QuranRepository(private val apiService: QuranApiService) {
         apiService.getTanweenLesson(letterOrder).data
     }
 
-    suspend fun getPracticeLessons(): Result<List<PracticeSessionData>> = runCatching {
-        apiService.getPracticeLessons().data
-    }
-
-    suspend fun getPracticeLesson(id: String): Result<PracticeSessionData> = runCatching {
-        apiService.getPracticeLesson(id).data
-    }
+    suspend fun getPracticeStep(lessonNum: Int, stepNum: Int): Result<PracticeStepResponse> =
+        runCatching { apiService.getPracticeStep(lessonNum, stepNum) }
+            .recoverCatching {
+                offlineStep(lessonNum, stepNum)
+                    ?: throw NoSuchElementException("offline: no step $lessonNum/$stepNum")
+            }
 }

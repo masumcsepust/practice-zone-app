@@ -1,7 +1,9 @@
 package com.example.quran_app.ui.screens.home
 
 import com.example.quran_app.ui.screens.learn.PracticeLessonScreen
+import com.example.quran_app.ui.screens.leaderboard.LeaderboardScreen
 import com.example.quran_app.ui.screens.profile.ProfileScreen
+import com.example.quran_app.ui.viewmodel.LeaderboardViewModel
 import com.example.quran_app.ui.viewmodel.PracticeLessonViewModel
 import com.example.quran_app.ui.viewmodel.ProfileViewModel
 
@@ -46,13 +48,14 @@ private val TextSlate   = Color(0xFF64748B)
 
 @Composable
 fun HomeScreen(
-    onLetterLearning:      () -> Unit,
-    onTajweed:             () -> Unit,
-    lessonViewModel:       TanweenLessonViewModel,
+    onLetterLearning:        () -> Unit,
+    onTajweed:               () -> Unit,
+    lessonViewModel:         TanweenLessonViewModel,
     practiceLessonViewModel: PracticeLessonViewModel,
-    profileViewModel:      ProfileViewModel,
-    onGoLogin:             () -> Unit,
-    onGoRegister:          () -> Unit,
+    profileViewModel:        ProfileViewModel,
+    leaderboardViewModel:    LeaderboardViewModel,
+    onGoLogin:               () -> Unit,
+    onGoRegister:            () -> Unit,
 ) {
     var selectedTab by remember { mutableStateOf(0) }
 
@@ -68,14 +71,16 @@ fun HomeScreen(
             when (selectedTab) {
                 0    -> MainHomeContent(onLetterLearning, onTajweed, onSukoonLesson = { selectedTab = 1 })
                 1    -> PracticeLessonScreen(viewModel = practiceLessonViewModel)
+                3    -> LeaderboardScreen(viewModel = leaderboardViewModel)
                 4    -> ProfileScreen(
                     viewModel    = profileViewModel,
                     onGoLogin    = onGoLogin,
-                    onGoRegister = onGoRegister
+                    onGoRegister = onGoRegister,
+                    onBack       = { selectedTab = 0 },
                 )
                 else -> PlaceholderTab(
                     label = when (selectedTab) {
-                        2 -> "পছন্দসমূহ"; 3 -> "লিডারবোর্ড"; else -> ""
+                        2 -> "পছন্দসমূহ"; else -> ""
                     }
                 )
             }

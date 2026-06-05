@@ -10,7 +10,6 @@ public class ArabicLetterController : ControllerBase
 {
     private readonly IArabicLetterRepository     _repo;
     private readonly IArabicLetterTtsService     _tts;
-    private readonly ILetterExplanationService   _explanation;
     private readonly ILetterDrawingService       _drawing;
     private readonly ILetterPronunciationService _pronunciation;
     private readonly ITajweedProgressRepository  _tajweedProgress;
@@ -19,7 +18,6 @@ public class ArabicLetterController : ControllerBase
     public ArabicLetterController(
         IArabicLetterRepository     repo,
         IArabicLetterTtsService     tts,
-        ILetterExplanationService   explanation,
         ILetterDrawingService       drawing,
         ILetterPronunciationService pronunciation,
         ITajweedProgressRepository  tajweedProgress,
@@ -27,7 +25,6 @@ public class ArabicLetterController : ControllerBase
     {
         _repo            = repo;
         _tts             = tts;
-        _explanation     = explanation;
         _drawing         = drawing;
         _pronunciation   = pronunciation;
         _tajweedProgress = tajweedProgress;
@@ -47,29 +44,6 @@ public class ArabicLetterController : ControllerBase
             paged.PageSize,
             paged.TotalCount);
     }
-
-    [HttpGet("{id:guid}")]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
-    {
-        var letter = await _repo.GetByIdAsync(id, ct);
-        if (letter is null) return NotFound();
-        return Ok(ToDto(letter));
-    }
-
-    [HttpGet("{id:guid}/explanation")]
-    public async Task<IActionResult> GetExplanation(Guid id, CancellationToken ct)
-    {
-        var letter = await _repo.GetByIdAsync(id, ct);
-        if (letter is null) return NotFound();
-
-        var dto         = ToDto(letter);
-        var explanation = await _explanation.ExplainAsync(dto, ct);
-        return Ok(explanation);
-    }
-
-    [HttpGet("forms")]
-    public async Task<IReadOnlyList<LetterFormsDto>> GetAllForms(CancellationToken ct)
-        => await _repo.GetAllFormsAsync(ct);
 
     [HttpGet("{id:guid}/forms")]
     public async Task<IActionResult> GetFormsById(Guid id, CancellationToken ct)
