@@ -10,19 +10,32 @@ namespace backend.API.Controllers;
 [Route("api/quran")]
 public class QuranController : ControllerBase
 {
-    private readonly ISurahRepository _surahs;
-    private readonly IAyahRepository  _ayahs;
-    private readonly HttpClient        _http;
+    private readonly ISurahRepository              _surahs;
+    private readonly IAyahRepository               _ayahs;
+    private readonly HttpClient                    _http;
+    private readonly IPronunciationAssessmentService _pronunciation;
+    private readonly ITajweedEngine                _tajweedEngine;
 
-    private static readonly string AlQuranBase      = "https://api.alquran.cloud/v1/surah";
-    private static readonly string ArabicEdition    = "quran-simple";
-    private static readonly string EnglishEdition   = "en.sahih";
+    private static readonly string AlQuranBase   = "https://api.alquran.cloud/v1/surah";
+    private static readonly string ArabicEdition = "quran-simple";
+    private static readonly string EnglishEdition= "en.sahih";
 
-    public QuranController(ISurahRepository surahs, IAyahRepository ayahs, IHttpClientFactory httpFactory)
+    // Al-Fātiḥah + 9 short surahs from Juz 30 — good for recitation practice
+    private static readonly int[] RecitationSurahNumbers =
+        { 1, 103, 106, 108, 109, 110, 111, 112, 113, 114 };
+
+    public QuranController(
+        ISurahRepository               surahs,
+        IAyahRepository                ayahs,
+        IHttpClientFactory             httpFactory,
+        IPronunciationAssessmentService pronunciation,
+        ITajweedEngine                 tajweedEngine)
     {
-        _surahs = surahs;
-        _ayahs  = ayahs;
-        _http   = httpFactory.CreateClient("alquran");
+        _surahs        = surahs;
+        _ayahs         = ayahs;
+        _http          = httpFactory.CreateClient("alquran");
+        _pronunciation = pronunciation;
+        _tajweedEngine = tajweedEngine;
     }
 
     [HttpGet("surahs")]
@@ -32,6 +45,25 @@ public class QuranController : ControllerBase
         return surahs.Select(s => new SurahDto(
             s.Id, s.SurahNumber, s.NameArabic, s.NameEnglish, s.NameBangla, s.TotalAyahs
         )).ToList();
+    }
+
+    /// <summary>
+    /// Returns 10 curated surahs for recitation practice. Seeds from Al-Quran Cloud on first call.
+    /// NameEnglish = transliteration (e.g. "Al-Faatiha"), NameBangla = English meaning ("The Opening").
+    /// </summary>
+    [HttpGet("surahs/recitation")]
+    public async Task<IReadOnlyList<SurahDto>> GetRecitationSurahs(CancellationToken ct)
+    {
+        var result = new List<SurahDto>(RecitationSurahNumbers.Length);
+        foreach (var num in RecitationSurahNumbers)
+        {
+            var surah = await _surahs.GetBySurahNumberAsync(num, ct)
+                        ?? await FetchAndCacheSurahMetaAsync(num, ct);
+            if (surah is not null)
+                result.Add(new SurahDto(surah.Id, surah.SurahNumber,
+                    surah.NameArabic, surah.NameEnglish, surah.NameBangla, surah.TotalAyahs));
+        }
+        return result;
     }
 
     [HttpGet("surahs/{surahId:int}/ayahs")]
@@ -61,6 +93,107 @@ public class QuranController : ControllerBase
             ayahs = await FetchAndCachePageFromAlQuranAsync(pageNumber, ct);
 
         return Ok(ayahs.Select(ToDto).ToList());
+    }
+
+    // ── Ayah recitation assessment ────────────────────────────────────────────
+
+    [HttpPost("surahs/{surahId:int}/ayahs/{ayahNumber:int}/assess")]
+    [DisableRequestSizeLimit]
+    public async Task<IActionResult> AssessAyahRecitation(
+        int surahId, int ayahNumber, IFormFile audio, CancellationToken ct)
+    {
+        var ayah = await _ayahs.GetBySurahAndAyahAsync(surahId, ayahNumber, ct);
+        if (ayah is null) return NotFound("Ayah not found");
+
+        using var ms = new MemoryStream();
+        await audio.CopyToAsync(ms, ct);
+
+        var pronunciation = await _pronunciation.AssessOnceAsync(
+            ayah.ArabicText, ms.ToArray(), audio.ContentType ?? "audio/ogg", ct);
+
+        if (pronunciation is null)
+            return Ok(new AyahAssessmentDto(0, 0, 0f, "",
+                [new AyahNoteDto("POSITIVE", "", "No speech detected",
+                    "Make sure your microphone is working and speak clearly.", false, null)]));
+
+        var analysis = _tajweedEngine.Analyze(pronunciation, ayah.ArabicText);
+
+        return Ok(new AyahAssessmentDto(
+            OverallTajweed: (int)Math.Round(analysis.TajweedScore),
+            LettersPct:     (int)Math.Round(analysis.AccuracyScore),
+            PacePct:        (float)(analysis.FluencyScore / 100.0),
+            RecognizedText: analysis.RecognizedText,
+            Notes:          BuildNotes(analysis)));
+    }
+
+    private static IReadOnlyList<AyahNoteDto> BuildNotes(TajweedAnalysisResponseDto analysis)
+    {
+        var notes = new List<AyahNoteDto>();
+
+        foreach (var issue in analysis.TajweedIssues)
+        {
+            var kind = issue.RuleType switch
+            {
+                "Qalqalah" => "QALQALAH",
+                "Madd"     => "MADD",
+                "Ghunnah"  => "GHUNNAH",
+                "Idgham"   => "IDGHAAM",
+                "Ikhfa"    => "IKHFAA",
+                _          => "QALQALAH"
+            };
+            notes.Add(new AyahNoteDto(kind, issue.AffectedLetter,
+                $"{issue.RuleType} — \"{issue.Word}\"",
+                issue.Feedback, false, null));
+        }
+
+        foreach (var word in analysis.Words.Where(w => !w.IsCorrect && w.AccuracyScore < 70))
+        {
+            if (notes.Any(n => n.Arabic == word.Word)) continue;
+            notes.Add(new AyahNoteDto("QALQALAH", word.Word,
+                $"Check \"{word.Word}\"",
+                $"Accuracy {word.AccuracyScore:F0}% — error: {word.ErrorType}.", false, null));
+        }
+
+        if (analysis.FluencyScore < 60)
+            notes.Add(new AyahNoteDto("MADD", "", "Fluency",
+                "Try to maintain a steady pace without pausing mid-word.", false, null));
+
+        if (analysis.TajweedScore >= 75 || notes.Count == 0)
+            notes.Add(new AyahNoteDto("POSITIVE", "",
+                analysis.TajweedScore >= 90 ? "Mā shā' Allāh — excellent!" : "Good effort!",
+                analysis.TajweedScore >= 90
+                    ? "Your pronunciation and tajweed were very clear."
+                    : "You're making good progress. Keep practicing.",
+                true, null));
+
+        return notes;
+    }
+
+    private async Task<Surah?> FetchAndCacheSurahMetaAsync(int surahNumber, CancellationToken ct)
+    {
+        try
+        {
+            var resp = await _http.GetStringAsync($"{AlQuranBase}/{surahNumber}", ct);
+            using var doc  = JsonDocument.Parse(resp);
+            var data = doc.RootElement.GetProperty("data");
+
+            var surah = new Surah
+            {
+                Id          = surahNumber,
+                SurahNumber = surahNumber,
+                NameArabic  = data.GetProperty("name").GetString()                     ?? "",
+                NameEnglish = data.GetProperty("englishName").GetString()              ?? "",
+                NameBangla  = data.GetProperty("englishNameTranslation").GetString()   ?? "",
+                TotalAyahs  = data.GetProperty("numberOfAyahs").GetInt32(),
+            };
+
+            await _surahs.UpsertAsync(surah, ct);
+            return surah;
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     private async Task<IReadOnlyList<Ayah>> FetchAndCacheFromAlQuranAsync(
@@ -174,7 +307,8 @@ public class QuranController : ControllerBase
     private static AyahDto ToDto(Ayah a) => new(
         a.Id, a.SurahId, a.AyahNumber,
         a.ArabicText, a.EnglishTranslation, a.BanglaTranslation, a.Transliteration,
-        a.Page, a.Juz, a.Manzil, a.Ruku, a.HizbQuarter, a.Sajda);
+        a.Page, a.Juz, a.Manzil, a.Ruku, a.HizbQuarter, a.Sajda,
+        $"https://everyayah.com/data/Alafasy_128kbps/{a.SurahId:D3}{a.AyahNumber:D3}.mp3");
 
     private static string Normalize(string arabic)
         => new string(arabic.Where(c => c >= '؀' && c <= 'ۿ').ToArray());

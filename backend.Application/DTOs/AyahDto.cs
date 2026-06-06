@@ -13,4 +13,5 @@ public record AyahDto(
     int?   Manzil,
     int?   Ruku,
     int?   HizbQuarter,
-    bool?  Sajda);
+    bool?  Sajda,
+    string AudioUrl);

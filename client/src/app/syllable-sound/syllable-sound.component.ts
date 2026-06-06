@@ -51,6 +51,7 @@ export class SyllableSoundComponent implements OnInit {
     combinedCharacter: '',
     transliterationEn: '',
     transliterationBn: '',
+    transliterationText: '',
     audioUrl: ''
   });
 
@@ -71,7 +72,7 @@ export class SyllableSoundComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.form.set({ letterId: '', signId: '', combinedCharacter: '', transliterationEn: '', transliterationBn: '', audioUrl: '' });
+    this.form.set({ letterId: '', signId: '', combinedCharacter: '', transliterationEn: '', transliterationBn: '', transliterationText: '', audioUrl: '' });
     this.editId.set(null);
     this.modalMode.set('create');
     this.showModal.set(true);
@@ -79,12 +80,13 @@ export class SyllableSoundComponent implements OnInit {
 
   openEdit(s: SyllableSoundDto): void {
     this.form.set({
-      letterId: s.letterId,
-      signId:   s.signId,
-      combinedCharacter: s.combinedCharacter,
-      transliterationEn: s.transliterationEn,
-      transliterationBn: s.transliterationBn,
-      audioUrl:          s.audioUrl
+      letterId:           s.letterId,
+      signId:             s.signId,
+      combinedCharacter:  s.combinedCharacter,
+      transliterationEn:  s.transliterationEn,
+      transliterationBn:  s.transliterationBn,
+      transliterationText: s.transliterationText,
+      audioUrl:           s.audioUrl
     });
     this.editId.set(s.id);
     this.modalMode.set('edit');
@@ -108,10 +110,11 @@ export class SyllableSoundComponent implements OnInit {
     } else {
       const id = this.editId()!;
       const upd: UpdateSyllableSoundDto = {
-        combinedCharacter: f.combinedCharacter,
-        transliterationEn: f.transliterationEn,
-        transliterationBn: f.transliterationBn,
-        audioUrl:          f.audioUrl
+        combinedCharacter:  f.combinedCharacter,
+        transliterationEn:  f.transliterationEn,
+        transliterationBn:  f.transliterationBn,
+        transliterationText: f.transliterationText,
+        audioUrl:           f.audioUrl
       };
       this.svc.update(id, upd).subscribe({
         next: () => { this.saving.set(false); this.closeModal(); this.load(); },

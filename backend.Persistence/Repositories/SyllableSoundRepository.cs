@@ -56,13 +56,14 @@ public class SyllableSoundRepository : ISyllableSoundRepository
         var entity = await _db.SyllableSounds.FindAsync([id], ct);
         if (entity is null) return null;
 
-        entity.CombinedCharacter      = dto.CombinedCharacter;
-        entity.Transliteration        = new Domain.Entities.LocalizedText
+        entity.CombinedCharacter   = dto.CombinedCharacter;
+        entity.Transliteration     = new Domain.Entities.LocalizedText
         {
             En = dto.TransliterationEn,
             Bn = dto.TransliterationBn
         };
-        entity.AudioUrl = dto.AudioUrl;
+        entity.TransliterationText = dto.TransliterationText;
+        entity.AudioUrl            = dto.AudioUrl;
 
         await _db.SaveChangesAsync(ct);
         return await WithIncludes().FirstOrDefaultAsync(s => s.Id == id, ct);

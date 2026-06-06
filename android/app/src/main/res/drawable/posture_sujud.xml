@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sujud: prostrate, forehead and hands on ground, facing left -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#D8B25A"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="
+            M 22,68 m -6,0 a 6,6 0 1,0 12,0 a 6,6 0 1,0 -12,0
+            M 16,74 L 16,84
+            M 24,74 L 24,84
+            M 28,67 L 56,40
+            M 56,40 L 48,62 L 44,78
+            M 56,40 L 64,62 L 68,78
+            M 44,78 L 40,82
+            M 68,78 L 72,82
+        "/>
+</vector>

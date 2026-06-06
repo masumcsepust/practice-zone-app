@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ruku: bowing ~90°, hands on knees, facing left -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#D8B25A"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="
+            M 18,42 m -7,0 a 7,7 0 1,0 14,0 a 7,7 0 1,0 -14,0
+            M 25,42 L 65,42
+            M 42,42 L 42,60
+            M 56,42 L 56,60
+            M 65,42 L 58,72
+            M 65,42 L 72,72
+            M 58,72 L 52,72
+            M 72,72 L 78,72
+        "/>
+</vector>

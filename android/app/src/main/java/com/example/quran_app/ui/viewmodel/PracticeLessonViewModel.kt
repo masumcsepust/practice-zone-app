@@ -103,7 +103,7 @@ class PracticeLessonViewModel(
 
     fun playAudio(url: String) {
         if (url.isBlank()) return
-        val full = if (url.startsWith("http")) url else "http://localhost:5092$url"
+        val full = if (url.startsWith("http")) url else "http://192.168.0.111:5092$url"
         audioPlayer.play(full)
     }
 

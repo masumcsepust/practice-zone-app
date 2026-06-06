@@ -16,12 +16,13 @@ data class PracticeStepResponse(
 )
 
 data class StepSyllable(
-    @SerializedName("arabic")        val arabic:        String,
-    @SerializedName("translit")      val translit:      String,
-    @SerializedName("bengali")       val bengali:       String,
-    @SerializedName("prompt")        val prompt:        String,
-    @SerializedName("letterBengali") val letterBengali: String,
-    @SerializedName("signName")      val signName:      String,
-    @SerializedName("signGroup")     val signGroup:     String,
-    @SerializedName("audioUrl")      val audioUrl:      String = "",
+    @SerializedName("arabic")              val arabic:              String,
+    @SerializedName("translit")            val translit:            String,
+    @SerializedName("bengali")             val bengali:             String,
+    @SerializedName("transliterationText") val transliterationText: String = "",
+    @SerializedName("prompt")             val prompt:              String,
+    @SerializedName("letterBengali")      val letterBengali:       String,
+    @SerializedName("signName")           val signName:            String,
+    @SerializedName("signGroup")          val signGroup:           String,
+    @SerializedName("audioUrl")           val audioUrl:            String = "",
 )

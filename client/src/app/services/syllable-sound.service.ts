@@ -13,6 +13,7 @@ export interface SyllableSoundDto {
   combinedCharacter: string;
   transliterationEn: string;
   transliterationBn: string;
+  transliterationText: string;
   audioUrl: string;
 }
 
@@ -32,6 +33,7 @@ export interface CreateSyllableSoundDto {
   combinedCharacter: string;
   transliterationEn: string;
   transliterationBn: string;
+  transliterationText: string;
   audioUrl: string;
 }
 
@@ -39,6 +41,7 @@ export interface UpdateSyllableSoundDto {
   combinedCharacter: string;
   transliterationEn: string;
   transliterationBn: string;
+  transliterationText: string;
   audioUrl: string;
 }
 

@@ -15,5 +15,6 @@ data class Ayah(
     @SerializedName("manzil") val manzil: Int?,
     @SerializedName("ruku") val ruku: Int?,
     @SerializedName("hizbQuarter") val hizbQuarter: Int?,
-    @SerializedName("sajda") val sajda: Boolean?
+    @SerializedName("sajda") val sajda: Boolean?,
+    @SerializedName("audioUrl") val audioUrl: String = "",
 )

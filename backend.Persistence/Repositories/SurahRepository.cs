@@ -18,4 +18,21 @@ public class SurahRepository : ISurahRepository
 
     public async Task<Surah?> GetBySurahNumberAsync(int surahNumber, CancellationToken ct = default)
         => await _ctx.Surahs.FirstOrDefaultAsync(s => s.SurahNumber == surahNumber, ct);
+
+    public async Task UpsertAsync(Surah surah, CancellationToken ct = default)
+    {
+        var existing = await _ctx.Surahs
+            .FirstOrDefaultAsync(s => s.SurahNumber == surah.SurahNumber, ct);
+
+        if (existing is null)
+            _ctx.Surahs.Add(surah);
+        else
+        {
+            existing.NameArabic  = surah.NameArabic;
+            existing.NameEnglish = surah.NameEnglish;
+            existing.NameBangla  = surah.NameBangla;
+            existing.TotalAyahs  = surah.TotalAyahs;
+        }
+        await _ctx.SaveChangesAsync(ct);
+    }
 }

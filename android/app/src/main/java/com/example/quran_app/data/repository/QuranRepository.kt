@@ -10,7 +10,6 @@ import com.example.quran_app.domain.model.PagedResponse
 import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
 import com.example.quran_app.domain.model.TajweedLetterProgress
-import com.example.quran_app.data.local.offlineStep
 import com.example.quran_app.domain.model.PracticeStepResponse
 import com.example.quran_app.domain.model.TanweenLessonData
 
@@ -32,6 +31,10 @@ class QuranRepository(private val apiService: QuranApiService) {
 
     suspend fun getSurahs(): Result<List<Surah>> = runCatching {
         apiService.getSurahs()
+    }
+
+    suspend fun getRecitationSurahs(): Result<List<Surah>> = runCatching {
+        apiService.getRecitationSurahs()
     }
 
     suspend fun getAyahs(surahId: Int): Result<List<Ayah>> = runCatching {
@@ -65,8 +68,4 @@ class QuranRepository(private val apiService: QuranApiService) {
 
     suspend fun getPracticeStep(lessonNum: Int, stepNum: Int): Result<PracticeStepResponse> =
         runCatching { apiService.getPracticeStep(lessonNum, stepNum) }
-            .recoverCatching {
-                offlineStep(lessonNum, stepNum)
-                    ?: throw NoSuchElementException("offline: no step $lessonNum/$stepNum")
-            }
 }

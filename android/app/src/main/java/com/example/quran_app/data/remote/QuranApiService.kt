@@ -16,9 +16,13 @@ import com.example.quran_app.domain.model.UserInfo
 import com.example.quran_app.domain.model.SaveTajweedProgressRequest
 import com.example.quran_app.domain.model.Surah
 import com.example.quran_app.domain.model.TajweedLetterProgress
+import com.example.quran_app.domain.model.AyahAssessmentResult
+import okhttp3.MultipartBody
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -53,8 +57,19 @@ interface QuranApiService {
     @GET("api/quran/surahs")
     suspend fun getSurahs(): List<Surah>
 
+    @GET("api/quran/surahs/recitation")
+    suspend fun getRecitationSurahs(): List<Surah>
+
     @GET("api/quran/surahs/{surahId}/ayahs")
     suspend fun getAyahs(@Path("surahId") surahId: Int): List<Ayah>
+
+    @Multipart
+    @POST("api/quran/surahs/{surahId}/ayahs/{ayahNumber}/assess")
+    suspend fun assessAyah(
+        @Path("surahId")    surahId:    Int,
+        @Path("ayahNumber") ayahNumber: Int,
+        @Part audio: MultipartBody.Part,
+    ): AyahAssessmentResult
 
     @GET("api/quran/pages/{pageNumber}")
     suspend fun getPage(@Path("pageNumber") pageNumber: Int): List<Ayah>

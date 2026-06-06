@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tashahud: sitting, right index finger raised -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="96dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+    <path
+        android:strokeColor="#D8B25A"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent"
+        android:pathData="
+            M 50,16 m -8,0 a 8,8 0 1,0 16,0 a 8,8 0 1,0 -16,0
+            M 50,24 L 50,52
+            M 50,52 L 28,60 L 24,76
+            M 50,52 L 72,60 L 76,76
+            M 50,36 L 36,52
+            M 50,36 L 62,24
+            M 62,24 L 60,17
+        "/>
+</vector>

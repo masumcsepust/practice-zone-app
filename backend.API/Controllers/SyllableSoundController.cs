@@ -59,7 +59,7 @@ public class SyllableSoundController : ControllerBase
     {
         var entity = new SyllableSound
         {
-            LetterId          = body.LetterId,
+            LetterId           = body.LetterId,
             SignId             = body.SignId,
             CombinedCharacter  = body.CombinedCharacter,
             Transliteration    = new LocalizedText
@@ -67,7 +67,8 @@ public class SyllableSoundController : ControllerBase
                 En = body.TransliterationEn,
                 Bn = body.TransliterationBn
             },
-            AudioUrl = body.AudioUrl
+            TransliterationText = body.TransliterationText,
+            AudioUrl            = body.AudioUrl
         };
 
         var created = await _repo.CreateAsync(entity, ct);
@@ -102,6 +103,7 @@ public class SyllableSoundController : ControllerBase
         s.CombinedCharacter,
         s.Transliteration.En,
         s.Transliteration.Bn,
+        s.TransliterationText,
         s.AudioUrl
     );
 }

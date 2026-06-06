@@ -11,6 +11,7 @@ public record SyllableSoundDto(
     string CombinedCharacter,
     string TransliterationEn,
     string TransliterationBn,
+    string TransliterationText,
     string AudioUrl
 );
 
@@ -20,6 +21,7 @@ public record CreateSyllableSoundDto(
     string CombinedCharacter,
     string TransliterationEn,
     string TransliterationBn,
+    string TransliterationText,
     string AudioUrl
 );
 
@@ -27,5 +29,6 @@ public record UpdateSyllableSoundDto(
     string CombinedCharacter,
     string TransliterationEn,
     string TransliterationBn,
+    string TransliterationText,
     string AudioUrl
 );

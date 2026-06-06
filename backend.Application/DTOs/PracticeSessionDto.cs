@@ -23,11 +23,12 @@ public record PracticeItemSessionDto(
 );
 
 public record SyllableDto(
-    [property: JsonPropertyName("combined_character")]  string           CombinedCharacter,
-    [property: JsonPropertyName("transliteration")]     string           Transliteration,
-    [property: JsonPropertyName("transliteration_bn")]  string           TransliterationBn,
-    [property: JsonPropertyName("audio_url")]           string           AudioUrl,
-    [property: JsonPropertyName("details")]             SyllableDetails  Details
+    [property: JsonPropertyName("combined_character")]   string           CombinedCharacter,
+    [property: JsonPropertyName("transliteration")]      string           Transliteration,
+    [property: JsonPropertyName("transliteration_bn")]   string           TransliterationBn,
+    [property: JsonPropertyName("transliteration_text")] string           TransliterationText,
+    [property: JsonPropertyName("audio_url")]            string           AudioUrl,
+    [property: JsonPropertyName("details")]              SyllableDetails  Details
 );
 
 public record SyllableDetails(

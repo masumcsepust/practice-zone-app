@@ -101,21 +101,23 @@ public class LessonPracticeRepository(AppDbContext db) : ILessonPracticeReposito
     }
 
     private static StepSyllableDto ToStepSyllable(SyllableSound s, string prompt) => new(
-        Arabic:        s.CombinedCharacter,
-        Translit:      s.Transliteration.En,
-        Bengali:       s.Transliteration.Bn,
-        Prompt:        prompt,
-        LetterBengali: s.Letter.Name.Bn.Length > 0 ? s.Letter.Name.Bn : s.Letter.Name.En,
-        SignName:      s.Sign.Name.Bn.Length   > 0 ? s.Sign.Name.Bn   : s.Sign.Name.En,
-        SignGroup:     s.Sign.SignGroup,
-        AudioUrl:      s.AudioUrl
+        Arabic:              s.CombinedCharacter,
+        Translit:            s.Transliteration.En,
+        Bengali:             s.Transliteration.Bn,
+        TransliterationText: s.TransliterationText,
+        Prompt:              prompt,
+        LetterBengali:       s.Letter.Name.Bn.Length > 0 ? s.Letter.Name.Bn : s.Letter.Name.En,
+        SignName:            s.Sign.Name.Bn.Length   > 0 ? s.Sign.Name.Bn   : s.Sign.Name.En,
+        SignGroup:           s.Sign.SignGroup,
+        AudioUrl:            s.AudioUrl
     );
 
     private static SyllableDto ToSyllableDto(SyllableSound s) => new(
-        CombinedCharacter:  s.CombinedCharacter,
-        Transliteration:    s.Transliteration.En,
-        TransliterationBn:  s.Transliteration.Bn,
-        AudioUrl:           s.AudioUrl,
+        CombinedCharacter:   s.CombinedCharacter,
+        Transliteration:     s.Transliteration.En,
+        TransliterationBn:   s.Transliteration.Bn,
+        TransliterationText: s.TransliterationText,
+        AudioUrl:            s.AudioUrl,
         Details: new SyllableDetails(
             LetterName: s.Letter.Name.Bn.Length > 0 ? s.Letter.Name.Bn : s.Letter.Name.En,
             SignName:   s.Sign.Name.Bn.Length   > 0 ? s.Sign.Name.Bn   : s.Sign.Name.En,

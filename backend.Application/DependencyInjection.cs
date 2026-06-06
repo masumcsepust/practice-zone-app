@@ -8,8 +8,8 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Singleton: holds live WebSocket connections across the app lifetime
         services.AddSingleton<IWebSocketSessionManager, WebSocketSessionManager>();
+        services.AddSingleton<IPhonemeAnalysisService, PhonemeAnalysisService>();
 
         return services;
     }

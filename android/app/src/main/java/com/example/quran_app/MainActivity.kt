@@ -1,5 +1,6 @@
 package com.example.quran_app
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,9 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.quran_app.ui.navigation.Screen
 import com.example.quran_app.ui.screens.auth.LoginScreen
 import com.example.quran_app.ui.screens.auth.RegisterScreen
@@ -20,13 +23,17 @@ import com.example.quran_app.ui.screens.letters.ArabicLettersScreen
 import com.example.quran_app.ui.screens.letters.SukoonLessonScreen
 import com.example.quran_app.ui.screens.letters.TajweedProgressScreen
 import com.example.quran_app.ui.screens.letters.TajweedScreen
+import com.example.quran_app.ui.screens.namaz.NamazHubScreen
+import com.example.quran_app.ui.screens.namaz.PostureLessonScreen
 import com.example.quran_app.ui.theme.QuranappTheme
 import com.example.quran_app.ui.viewmodel.ArabicLettersViewModel
 import com.example.quran_app.ui.viewmodel.AuthViewModel
 import com.example.quran_app.data.remote.RetrofitClient
 import com.example.quran_app.ui.viewmodel.LeaderboardViewModel
-import com.example.quran_app.ui.viewmodel.PracticeLessonViewModel
+import com.example.quran_app.ui.viewmodel.NamazHubViewModel
+import com.example.quran_app.ui.viewmodel.PostureLessonViewModel
 import com.example.quran_app.ui.viewmodel.ProfileViewModel
+import com.example.quran_app.ui.viewmodel.ReciteViewModel
 import com.example.quran_app.ui.viewmodel.TanweenLessonViewModel
 
 class MainActivity : ComponentActivity() {
@@ -52,8 +59,8 @@ class MainActivity : ComponentActivity() {
                             key = "tanween_home", factory = tanweenVmFactory())
                         val profileVm: ProfileViewModel = viewModel(
                             key = "profile", factory = profileVmFactory())
-                        val practiceVm: PracticeLessonViewModel = viewModel(
-                            key = "practice", factory = practiceVmFactory())
+                        val reciteVm: ReciteViewModel = viewModel(
+                            key = "recite", factory = reciteVmFactory())
                         val leaderboardVm: LeaderboardViewModel = viewModel(
                             key = "leaderboard", factory = leaderboardVmFactory())
 
@@ -65,14 +72,15 @@ class MainActivity : ComponentActivity() {
                         }
 
                         HomeScreen(
-                            onLetterLearning        = { navController.navigate(Screen.ArabicLetters.route) },
-                            onTajweed               = { navController.navigate(Screen.Tajweed.route) },
-                            lessonViewModel         = lessonVm,
-                            practiceLessonViewModel = practiceVm,
-                            profileViewModel        = profileVm,
-                            leaderboardViewModel    = leaderboardVm,
-                            onGoLogin               = { navController.navigate(Screen.Login.route) },
-                            onGoRegister            = { navController.navigate(Screen.Register.route) },
+                            onLetterLearning     = { navController.navigate(Screen.ArabicLetters.route) },
+                            onTajweed            = { navController.navigate(Screen.Tajweed.route) },
+                            onNamaz              = { navController.navigate(Screen.NamazHub.route) },
+                            lessonViewModel      = lessonVm,
+                            reciteViewModel      = reciteVm,
+                            profileViewModel     = profileVm,
+                            leaderboardViewModel = leaderboardVm,
+                            onGoLogin            = { navController.navigate(Screen.Login.route) },
+                            onGoRegister         = { navController.navigate(Screen.Register.route) },
                         )
                     }
 
@@ -133,6 +141,36 @@ class MainActivity : ComponentActivity() {
                             onBack    = { navController.popBackStack() }
                         )
                     }
+
+                    // ── Namaz ─────────────────────────────────────────────────
+                    composable(Screen.NamazHub.route) {
+                        val namazVm: NamazHubViewModel = viewModel(
+                            key = "namaz_hub", factory = namazHubVmFactory())
+                        NamazHubScreen(
+                            viewModel     = namazVm,
+                            onBack        = { navController.popBackStack() },
+                            onStartLesson = { step ->
+                                navController.navigate(Screen.PostureLesson.route(step))
+                            },
+                        )
+                    }
+
+                    composable(
+                        route     = Screen.PostureLesson.route,
+                        arguments = listOf(navArgument("step") {
+                            type         = NavType.IntType
+                            defaultValue = 1
+                        }),
+                    ) { backStack ->
+                        val step = backStack.arguments?.getInt("step") ?: 1
+                        val postureVm: PostureLessonViewModel = viewModel(
+                            key = "posture_$step", factory = postureLessonVmFactory(step))
+                        PostureLessonScreen(
+                            viewModel  = postureVm,
+                            onBack     = { navController.popBackStack() },
+                            onComplete = { navController.popBackStack(Screen.NamazHub.route, inclusive = false) },
+                        )
+                    }
                 }
             }
         }
@@ -140,13 +178,14 @@ class MainActivity : ComponentActivity() {
 
     // ── ViewModel factories ────────────────────────────────────────────────────
 
-    private fun practiceVmFactory() = object : ViewModelProvider.Factory {
+    private fun reciteVmFactory() = object : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(c: Class<T>): T =
-            PracticeLessonViewModel(
-                appContainer.quranRepository,
-                appContainer.audioPlayer,
-                appContainer.letterRecorder,
+            ReciteViewModel(
+                recorder    = appContainer.letterRecorder,
+                analyzer    = appContainer.recitationAnalyzer,
+                repository  = appContainer.quranRepository,
+                audioPlayer = appContainer.audioPlayer,
             ) as T
     }
 
@@ -192,5 +231,19 @@ class MainActivity : ComponentActivity() {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(c: Class<T>): T =
             LeaderboardViewModel(RetrofitClient.apiService) as T
+    }
+
+    private fun namazHubVmFactory() = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            NamazHubViewModel(
+                applicationContext.getSharedPreferences("namaz_prefs", Context.MODE_PRIVATE)
+            ) as T
+    }
+
+    private fun postureLessonVmFactory(step: Int) = object : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(c: Class<T>): T =
+            PostureLessonViewModel(step) as T
     }
 }

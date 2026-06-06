@@ -16,12 +16,13 @@ public record PracticeStepDto(
 );
 
 public record StepSyllableDto(
-    [property: JsonPropertyName("arabic")]        string Arabic,
-    [property: JsonPropertyName("translit")]      string Translit,
-    [property: JsonPropertyName("bengali")]       string Bengali,
-    [property: JsonPropertyName("prompt")]        string Prompt,
-    [property: JsonPropertyName("letterBengali")] string LetterBengali,
-    [property: JsonPropertyName("signName")]      string SignName,
-    [property: JsonPropertyName("signGroup")]     string SignGroup,
-    [property: JsonPropertyName("audioUrl")]      string AudioUrl
+    [property: JsonPropertyName("arabic")]              string Arabic,
+    [property: JsonPropertyName("translit")]            string Translit,
+    [property: JsonPropertyName("bengali")]             string Bengali,
+    [property: JsonPropertyName("transliterationText")] string TransliterationText,
+    [property: JsonPropertyName("prompt")]              string Prompt,
+    [property: JsonPropertyName("letterBengali")]       string LetterBengali,
+    [property: JsonPropertyName("signName")]            string SignName,
+    [property: JsonPropertyName("signGroup")]           string SignGroup,
+    [property: JsonPropertyName("audioUrl")]            string AudioUrl
 );

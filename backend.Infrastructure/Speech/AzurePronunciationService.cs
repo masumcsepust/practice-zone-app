@@ -153,9 +153,9 @@ public class AzurePronunciationService : IPronunciationAssessmentService
     {
         var speechConfig = SpeechConfig.FromSubscription(_subscriptionKey, _region);
         speechConfig.SpeechRecognitionLanguage = "ar-SA";
-        // Give Azure enough silence budget for a short single-letter sound
-        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000");
-        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,     "2000");
+        // Generous silence budget — ayahs take 5-15 s; don't cut off mid-recitation
+        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "8000");
+        speechConfig.SetProperty(PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,     "3000");
 
         var paConfig = new PronunciationAssessmentConfig(
             referenceText: referenceText,
@@ -166,17 +166,27 @@ public class AzurePronunciationService : IPronunciationAssessmentService
         var baseMime    = mimeType.Split(';')[0].Trim();
         var audioConfig = BuildAudioConfig(audioBytes, baseMime);
 
+        _logger.LogInformation("AssessOnce mimeType={Mime} bytes={Bytes}", baseMime, audioBytes.Length);
+
         using var recognizer = new SpeechRecognizer(speechConfig, audioConfig);
         paConfig.ApplyTo(recognizer);
 
         var result = await recognizer.RecognizeOnceAsync();
         audioConfig.Dispose();
 
-        _logger.LogInformation("AssessOnceAsync reason={Reason} text={Text}", result.Reason, result.Text);
+        if (result.Reason == ResultReason.Canceled)
+        {
+            var cancel = CancellationDetails.FromResult(result);
+            _logger.LogWarning(
+                "AssessOnce CANCELED: Reason={Reason} Code={Code} Details={Details}",
+                cancel.Reason, cancel.ErrorCode, cancel.ErrorDetails);
+            return null;
+        }
 
-        if (result.Reason != ResultReason.RecognizedSpeech
-            || string.IsNullOrWhiteSpace(result.Text))
-            return null;   // no speech detected
+        _logger.LogInformation("AssessOnce reason={Reason} text={Text}", result.Reason, result.Text);
+
+        if (string.IsNullOrWhiteSpace(result.Text))
+            return null;   // NoMatch — no speech or couldn't match reference
 
         var paResult     = PronunciationAssessmentResult.FromResult(result);
         var detailedJson = result.Properties.GetProperty(PropertyId.SpeechServiceResponse_JsonResult);
@@ -197,24 +207,29 @@ public class AzurePronunciationService : IPronunciationAssessmentService
 
     private static AudioConfig BuildAudioConfig(byte[] audioBytes, string mimeType)
     {
-        var isCompressed =
-            mimeType.Contains("webm",  StringComparison.OrdinalIgnoreCase) ||
-            mimeType.Contains("ogg",   StringComparison.OrdinalIgnoreCase) ||
-            mimeType.Contains("opus",  StringComparison.OrdinalIgnoreCase) ||
-            mimeType.Contains("mpeg",  StringComparison.OrdinalIgnoreCase) ||
-            mimeType.Contains("mp3",   StringComparison.OrdinalIgnoreCase);
-
-        if (isCompressed)
+        // SDK 1.50 compressed formats: OGG_OPUS, MP3, FLAC, ANY (no WEBM_OPUS / MPEG4_AAC)
+        var m = mimeType.ToLowerInvariant();
+        AudioStreamContainerFormat? compressed = m switch
         {
-            var format = AudioStreamFormat.GetCompressedFormat(AudioStreamContainerFormat.ANY);
-            var push   = AudioInputStream.CreatePushStream(format);
+            var s when s.Contains("ogg") || s.Contains("opus") => AudioStreamContainerFormat.OGG_OPUS,
+            var s when s.Contains("mp3")                       => AudioStreamContainerFormat.MP3,
+            var s when s.Contains("flac")                      => AudioStreamContainerFormat.FLAC,
+            var s when s.Contains("webm") || s.Contains("mp4")
+                    || s.Contains("mpeg") || s.Contains("aac") => AudioStreamContainerFormat.ANY,
+            _                                                  => null
+        };
+
+        if (compressed.HasValue)
+        {
+            var fmt  = AudioStreamFormat.GetCompressedFormat(compressed.Value);
+            var push = AudioInputStream.CreatePushStream(fmt);
             push.Write(audioBytes);
             push.Close();
             return AudioConfig.FromStreamInput(push);
         }
 
-        // WAV — strip 44-byte RIFF header before feeding raw PCM
-        var push2 = AudioInputStream.CreatePushStream();
+        // WAV / raw PCM — strip 44-byte RIFF header if present
+        var push2  = AudioInputStream.CreatePushStream();
         var isRiff = audioBytes.Length > 44
                      && audioBytes[0] == 'R' && audioBytes[1] == 'I'
                      && audioBytes[2] == 'F' && audioBytes[3] == 'F';

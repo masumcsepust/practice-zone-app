@@ -31,6 +31,7 @@
             <th>Sign</th>
             <th>Translit. (EN)</th>
             <th>Translit. (BN)</th>
+            <th>Translit. Text</th>
             <th>Audio</th>
             <th class="actions-col">Actions</th>
           </tr>
@@ -49,6 +50,7 @@
               </td>
               <td>{{ s.transliterationEn }}</td>
               <td>{{ s.transliterationBn }}</td>
+              <td>{{ s.transliterationText }}</td>
               <td>
                 @if (s.audioUrl) {
                   <button class="btn-icon" title="Play" (click)="playAudio(s.audioUrl)">▶</button>
@@ -80,8 +82,8 @@
           <!-- Letter dropdown — disabled in edit mode -->
           <label class="field">
             <span>Letter</span>
-            <select [value]="form().letterId"
-                    (change)="patchForm({ letterId: $any($event.target).value })"
+            <select [ngModel]="form().letterId"
+                    (ngModelChange)="patchForm({ letterId: $event })"
                     [disabled]="modalMode() === 'edit'">
               <option value="">— select —</option>
               @for (l of letters(); track l.id) {
@@ -93,8 +95,8 @@
           <!-- Sign dropdown — disabled in edit mode -->
           <label class="field">
             <span>Diacritic Sign</span>
-            <select [value]="form().signId"
-                    (change)="patchForm({ signId: $any($event.target).value })"
+            <select [ngModel]="form().signId"
+                    (ngModelChange)="patchForm({ signId: $event })"
                     [disabled]="modalMode() === 'edit'">
               <option value="">— select —</option>
               @for (s of signs(); track s.id) {
@@ -125,6 +127,14 @@
                    [value]="form().transliterationBn"
                    (input)="patchForm({ transliterationBn: $any($event.target).value })"
                    placeholder="e.g. বা" />
+          </label>
+
+          <label class="field">
+            <span>Transliteration Text</span>
+            <input type="text"
+                   [value]="form().transliterationText"
+                   (input)="patchForm({ transliterationText: $any($event.target).value })"
+                   placeholder="e.g. ba (plain text)" />
           </label>
 
           <label class="field">
